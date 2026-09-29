@@ -1,16 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, MapPin, Loader, Sparkles, Navigation } from 'lucide-react';
+import { Search, Pin } from 'lucide-react';
 import api from '../config/api';
 import SalonCard from '../components/SalonCard';
+import CustomAnnouncementBanner from '../components/CustomAnnouncementBanner';
 
 const Salons = ({ onSelectSalon, searchTerm = '' }) => {
   const { t } = useTranslation();
   const [salons, setSalons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [coords, setCoords] = useState(null);
-  const [coordsLoading, setCoordsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Favorites / Pinned salons persisted in localStorage
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const saved = localStorage.getItem('favorite_salons');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [filterFavoritesOnly, setFilterFavoritesOnly] = useState(false);
+
+  const toggleFavorite = (salonId, e) => {
+    if (e) e.stopPropagation();
+    setFavorites((prev) => {
+      const exists = prev.includes(salonId);
+      const updated = exists ? prev.filter((id) => id !== salonId) : [...prev, salonId];
+      try {
+        localStorage.setItem('favorite_salons', JSON.stringify(updated));
+      } catch (err) {
+        console.error('Failed to save favorite salons to localStorage', err);
+      }
+      return updated;
+    });
+  };
 
   const fetchSalons = async (latitude = null, longitude = null, query = searchTerm, isSilent = false) => {
     try {
@@ -25,7 +50,7 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
       }
 
       const response = await api.get(url);
-      setSalons(response.data.data);
+      setSalons(response.data.data || []);
     } catch (err) {
       if (!isSilent) setError('Failed to fetch salons. Please try again.');
     } finally {
@@ -35,21 +60,17 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
 
   const getGeoLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
       return;
     }
 
-    setCoordsLoading(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         setCoords({ latitude, longitude });
-        setCoordsLoading(false);
         fetchSalons(latitude, longitude, searchTerm);
       },
       (error) => {
         console.warn('Geolocation access denied', error);
-        setCoordsLoading(false);
         // Fallback to fetch without coords
         fetchSalons(null, null, searchTerm);
       }
@@ -75,36 +96,19 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // Priority sorting: Pinned salons always appear at the top
+  const displayedSalons = salons
+    .filter((salon) => !filterFavoritesOnly || favorites.includes(salon.id))
+    .sort((a, b) => {
+      const aFav = favorites.includes(a.id);
+      const bFav = favorites.includes(b.id);
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      return 0;
+    });
+
   return (
     <div className="flex-1 flex flex-col space-y-6 pb-20 animate-fade-in">
-      {/* Brand Greeting */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-1.5 font-sans">
-            <Sparkles className="w-5 h-5 text-violet-400 animate-pulse" />
-            {t('home.heroTitle')}
-          </h2>
-          <p className="text-xs text-slate-400 font-medium">{t('home.heroDesc')}</p>
-        </div>
-
-        {/* GPS Fetch Button */}
-        <button
-          onClick={getGeoLocation}
-          disabled={coordsLoading}
-          className={`p-2.5 rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1.5 ${
-            coords ? 'text-violet-400 border-violet-500/20' : ''
-          }`}
-        >
-          {coordsLoading ? (
-            <Loader className="w-4 h-4 animate-spin" />
-          ) : (
-            <Navigation className="w-4 h-4" />
-          )}
-          <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">
-            {coords ? 'GPS Sync' : 'GPS Loc'}
-          </span>
-        </button>
-      </div>
 
       {error && (
         <div className="p-3 bg-red-500/10 border border-red-500/25 text-red-400 rounded-xl text-xs font-semibold">
@@ -112,20 +116,84 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
         </div>
       )}
 
+      {/* 📢 Active Salon Custom Announcement & Banner */}
+      {(() => {
+        const announcingSalon = salons?.find(s => Boolean(s.customAnnouncement || s.customAnnouncementImage));
+        if (!announcingSalon) return null;
+        return (
+          <div 
+            onClick={() => onSelectSalon && onSelectSalon(announcingSalon.id)}
+            className="cursor-pointer transition-transform hover:scale-[1.005] active:scale-[0.995]"
+          >
+            <CustomAnnouncementBanner
+              message={announcingSalon.customAnnouncement}
+              imageUrl={announcingSalon.customAnnouncementImage}
+              salonName={announcingSalon.name}
+            />
+          </div>
+        );
+      })()}
+
       {/* Salons list */}
       {loading ? (
         <div className="flex-1 flex items-center justify-center py-20 min-h-[350px]">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-violet-500"></div>
         </div>
       ) : salons.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {salons.map((salon) => (
-            <SalonCard
-              key={salon.id}
-              salon={salon}
-              onClick={() => onSelectSalon(salon.id)}
-            />
-          ))}
+        <div className="space-y-4">
+          {/* Quick Filter tabs: All Salons vs Pinned Salons (visible when at least 1 salon is pinned) */}
+          {favorites.length > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setFilterFavoritesOnly(false)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  !filterFavoritesOnly
+                    ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25'
+                    : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+                }`}
+              >
+                All Salons ({salons.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterFavoritesOnly(true)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  filterFavoritesOnly
+                    ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25'
+                    : 'bg-slate-900/80 text-slate-400 hover:text-violet-300 border border-slate-800'
+                }`}
+              >
+                <Pin className={`w-3.5 h-3.5 ${filterFavoritesOnly ? 'fill-white text-white rotate-45' : 'fill-violet-400 text-violet-400'}`} />
+                <span>Pinned ({favorites.length})</span>
+              </button>
+            </div>
+          )}
+
+          {displayedSalons.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {displayedSalons.map((salon) => (
+                <SalonCard
+                  key={salon.id}
+                  salon={salon}
+                  isFavorite={favorites.includes(salon.id)}
+                  onToggleFavorite={toggleFavorite}
+                  onClick={() => onSelectSalon(salon.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center bg-slate-900/50 rounded-2xl border border-slate-800">
+              <p className="text-sm font-bold text-slate-300">No pinned salons found matching your search</p>
+              <button
+                type="button"
+                onClick={() => setFilterFavoritesOnly(false)}
+                className="mt-3 text-xs text-violet-400 hover:underline font-semibold cursor-pointer"
+              >
+                View all salons
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-center py-16 px-4 my-auto min-h-[350px]">

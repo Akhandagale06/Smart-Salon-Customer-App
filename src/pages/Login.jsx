@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Phone, Lock, Sparkles, Loader, ArrowRight, User, MessageSquare } from 'lucide-react';
 import api from '../config/api';
 import Footer from '../components/Footer';
 
 const Login = ({ forceStep3 }) => {
+  const { theme } = useTheme();
   const { sendOtp, verifyOtp, updateProfileInContext } = useAuth();
   const [mobileNumber, setMobileNumber] = useState('');
   const [otp, setOtp] = useState('');
@@ -119,7 +121,7 @@ const Login = ({ forceStep3 }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-950 p-6 relative overflow-hidden">
+    <div className={`min-h-screen flex flex-col justify-between p-6 relative overflow-hidden font-sans ${theme === 'light' ? 'theme-light bg-slate-100 text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
       {/* 20-Second OTP Pop-up Toast */}
       {otpPopup.show && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-md animate-bounce-in">

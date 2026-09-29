@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import api from '../config/api';
 import { formatServiceName } from '../utils/serviceTranslator';
+import { getLocalDateString, formatToDDMMYYYY } from '../utils/dateUtils';
 import { formatWaitTime } from '../utils/timeFormatter';
 
 const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
@@ -48,20 +49,7 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
   };
 
   const formatDateDMY = (dateStr) => {
-    if (!dateStr) return '';
-    const parts = dateStr.split('-');
-    if (parts.length === 3) {
-      const year = parts[0];
-      const monthIndex = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      const months = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-      ];
-      const monthName = months[monthIndex] || parts[1];
-      return `${day} ${monthName} ${year}`;
-    }
-    return dateStr;
+    return formatToDDMMYYYY(dateStr);
   };
 
   const getActiveBreak = () => {
@@ -103,7 +91,7 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
   const getMinutesUntilAppointment = () => {
     if (!appointment?.bookingDate || !appointment?.bookingTime) return null;
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     if (appointment.bookingDate !== todayStr) return null;
 
     const [h, m] = appointment.bookingTime.split(':').map(Number);
@@ -163,6 +151,9 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
     if (!queueStatus) return null;
     const activeBreak = getActiveBreak();
     const position = queueStatus.position || 1;
+    const aheadCount = queueStatus.customersAhead !== undefined 
+      ? queueStatus.customersAhead 
+      : Math.max(0, position - 1);
 
     if (activeBreak) {
       return (
@@ -214,7 +205,16 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
       );
     }
 
-    if (position === 1) {
+    // Resolve chair label according to selected / assigned chair
+    const preferredChairObj = (appointment?.preferredChairId || queueStatus?.assignedChairId)
+      ? chairs.find(c => String(c.id) === String(queueStatus?.assignedChairId || appointment?.preferredChairId))
+      : null;
+    const fallbackChairName = preferredChairObj 
+      ? (preferredChairObj.name || `Chair ${preferredChairObj.chairNumber}`)
+      : null;
+    const chairLabel = queueStatus?.assignedChairName || fallbackChairName || t('detail.serving');
+
+    if (position === 1 && aheadCount === 0) {
       const minsUntil = getMinutesUntilAppointment();
       // If appointment slot is in the future (> 2 mins away) and no one is ahead in queue
       if (minsUntil !== null && minsUntil > 2) {
@@ -293,15 +293,12 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
       );
     }
 
-    const chairLabel = queueStatus?.assignedChairName || t('detail.serving');
-    const aheadCount = Math.max(0, position - 1);
-
     return (
       <div className="py-4 px-2 w-full max-w-xs mx-auto">
         <div className="relative flex items-center justify-between">
           {/* Track Lines */}
           <div className="absolute left-4 right-4 top-4 h-0.5 bg-slate-800 z-0"></div>
-          <div className="absolute left-4 top-4 h-0.5 bg-gradient-to-r from-emerald-500 to-violet-500 z-0 transition-all duration-1000" style={{ width: position > 2 ? '50%' : '100%' }}></div>
+          <div className="absolute left-4 top-4 h-0.5 bg-gradient-to-r from-emerald-500 to-violet-500 z-0 transition-all duration-1000" style={{ width: aheadCount > 1 ? '50%' : '100%' }}></div>
 
           {/* Node 1: Serving */}
           <div className="relative z-10 flex flex-col items-center">
@@ -354,8 +351,16 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
         } catch (ignored) {}
       }
 
+      // Fetch chairs for this salon to have chair and barber names available
+      if (salonId) {
+        try {
+          const chairsRes = await api.get(`/api/salons/${salonId}/chairs/active`);
+          setChairs(chairsRes.data.data || []);
+        } catch (ignored) {}
+      }
+
       // Fetch queue position details if booked for today and not completed/cancelled
-      const isToday = bookingDate === new Date().toISOString().split('T')[0];
+      const isToday = bookingDate === getLocalDateString();
       const activeStatus = ['BOOKED', 'CONFIRMED', 'WAITING', 'ARRIVED', 'IN_SERVICE', 'LATE'].includes(response.data.data.status);
 
       if (isToday && activeStatus) {
@@ -464,12 +469,13 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
   const fetchChairsForReschedule = async () => {
     if (!appointment?.salonId) return;
     try {
-      const res = await api.get(`/api/salons/${appointment.salonId}/chairs/active`);
+      const dateParam = newDate ? `?date=${newDate}` : '';
+      const res = await api.get(`/api/salons/${appointment.salonId}/chairs/active${dateParam}`);
       const fetchedChairs = res.data?.data || [];
       setChairs(fetchedChairs);
       // Pre-select the appointment's current preferred chair if it exists
-      if (fetchedChairs.length > 0) {
-        setNewChairId(appointment?.preferredChairId || null);
+      if (fetchedChairs.length > 0 && newChairId === null && appointment?.preferredChairId) {
+        setNewChairId(appointment.preferredChairId);
       }
     } catch (err) {
       console.error('Failed to load chairs for reschedule:', err);
@@ -480,6 +486,7 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
   useEffect(() => {
     if (rescheduleOpen && newDate) {
       fetchSlotsForReschedule();
+      fetchChairsForReschedule();
     }
   }, [newDate, newChairId, rescheduleOpen]);
 
@@ -497,7 +504,7 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
     );
   }
 
-  const isToday = appointment?.bookingDate === new Date().toISOString().split('T')[0];
+  const isToday = appointment?.bookingDate === getLocalDateString();
   const isCancellable = ['BOOKED', 'CONFIRMED', 'WAITING', 'LATE'].includes(appointment?.status);
 
   return (
@@ -517,6 +524,12 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
         const activeBreak = getActiveBreak();
         const upcomingBreak = getUpcomingBreak();
         const isCompleted = appointment?.status === 'COMPLETED';
+        const preferredChairObj = (appointment?.preferredChairId || queueStatus?.assignedChairId)
+          ? chairs.find(c => String(c.id) === String(queueStatus?.assignedChairId || appointment?.preferredChairId))
+          : null;
+        const currentChairName = queueStatus?.assignedChairName 
+          || (preferredChairObj ? (preferredChairObj.name || `Chair ${preferredChairObj.chairNumber}`) : null);
+        const currentBarberName = queueStatus?.barberName || preferredChairObj?.barberName;
 
         return (
           <div className="live-queue-card p-6 rounded-3xl text-center space-y-4 relative overflow-hidden shadow-xl transition-all duration-500">
@@ -550,10 +563,10 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
               </div>
             )}
 
-            {queueStatus?.assignedChairName && !isCompleted && (
+            {currentChairName && !isCompleted && (
               <div className="chair-pill inline-flex items-center gap-1.5 px-4 py-1.5 bg-white text-slate-950 border border-slate-200 rounded-full text-xs font-black shadow-md">
-                <span className="text-slate-950 font-black">💈 {queueStatus.assignedChairName}</span>
-                {queueStatus.barberName && <span className="text-slate-950 font-black">({queueStatus.barberName})</span>}
+                <span className="text-slate-950 font-black">💈 {currentChairName}</span>
+                {currentBarberName && <span className="text-slate-950 font-black">({currentBarberName})</span>}
               </div>
             )}
 
@@ -562,19 +575,19 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
 
             {/* Wait Time Indicator (only if active) */}
             {!isCompleted && (
-              <div className="live-queue-wait-pill px-4 py-2.5 rounded-2xl inline-flex items-center gap-2 bg-slate-900/60 border border-violet-400/30 text-white font-black shadow-lg">
+              <div className="live-queue-wait-pill px-4 py-2 rounded-2xl inline-flex items-center gap-2 font-black shadow-lg">
                 {activeBreak ? (
                   <>
-                    <Coffee className="w-4 h-4 text-amber-400 animate-bounce shrink-0" />
-                    <span className="text-xs font-black text-white">
-                      Queue Paused (Break in Progress) • {t('detail.estimatedWait')}: {formatWaitTime(queueStatus?.estimatedWaitingTime || 0, t)}
+                    <Coffee className="w-4 h-4 text-amber-500 animate-bounce shrink-0 wait-pill-coffee-icon" />
+                    <span className="text-xs font-black wait-pill-text">
+                      Queue Paused (Break in Progress) • {t('detail.estimatedWait')}: <strong className="wait-pill-time">{formatWaitTime(queueStatus?.estimatedWaitingTime || 0, t)}</strong>
                     </span>
                   </>
                 ) : (
                   <>
-                    <Hourglass className="w-4 h-4 text-violet-300 animate-spin shrink-0" />
-                    <span className="text-xs font-black text-white">
-                      {t('detail.estimatedWait')}: {formatWaitTime(queueStatus?.estimatedWaitingTime || 0, t)}
+                    <Hourglass className="w-4 h-4 text-violet-400 animate-spin shrink-0 wait-pill-hourglass-icon" />
+                    <span className="text-xs font-black wait-pill-text">
+                      {t('detail.estimatedWait')}: <strong className="wait-pill-time">{formatWaitTime(queueStatus?.estimatedWaitingTime || 0, t)}</strong>
                     </span>
                   </>
                 )}
@@ -662,7 +675,7 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
           <div className="flex gap-4">
             <button
               onClick={() => {
-                setNewDate(appointment?.bookingDate || new Date().toISOString().split('T')[0]);
+                setNewDate(appointment?.bookingDate || getLocalDateString());
                 setRescheduleOpen(true);
               }}
               className="flex-1 py-3.5 rounded-xl border border-slate-850 hover:bg-slate-800/40 text-slate-200 font-bold text-xs flex items-center justify-center transition-colors"
@@ -708,7 +721,7 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
                 <label className="text-xs font-semibold text-slate-350">{t('detail.chooseNewDate')}</label>
                 <input
                   type="date"
-                  min={new Date().toISOString().split('T')[0]}
+                  min={getLocalDateString()}
                   value={newDate}
                   onChange={(e) => setNewDate(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-850 rounded-xl py-3 px-4 text-xs text-slate-200 focus:outline-none focus:border-violet-500 font-semibold cursor-pointer [color-scheme:dark]"
@@ -716,52 +729,117 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
               </div>
 
               {/* Chair Preference */}
-              {chairs.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-350">{t('detail.chooseChair', { defaultValue: 'Choose Chair (Optional)' })}</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* Any Chair option */}
-                    <button
-                      type="button"
-                      onClick={() => setNewChairId(null)}
-                      className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all duration-200 flex items-center gap-2 ${
-                        newChairId === null
-                          ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white border-violet-400 shadow-lg shadow-violet-500/20'
-                          : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
-                      }`}
-                    >
-                      <span className="text-base">✨</span>
-                      <span>{t('detail.anyChair', { defaultValue: 'Any Chair' })}</span>
-                    </button>
-                    {chairs.map(chair => (
+              {(() => {
+                const totalWaiting = chairs.reduce((sum, c) => sum + (c.waitingCount || 0), 0);
+                const selectedChair = chairs.find(c => String(c.id) === String(newChairId));
+                const selectedWaiting = selectedChair?.waitingCount ?? 0;
+
+                return chairs.length > 0 ? (
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-slate-350">{t('detail.chooseChair', { defaultValue: 'Choose Chair (Optional)' })}</label>
+                      <span className="text-[10px] font-bold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-ping" />
+                        {t('detail.liveQueueTitle', { defaultValue: 'Live Queue' })}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {/* Any Chair option */}
                       <button
-                        key={chair.id}
                         type="button"
-                        onClick={() => setNewChairId(chair.id)}
-                        className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all duration-200 flex flex-col items-start gap-0.5 ${
-                          newChairId === chair.id
-                            ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white border-violet-400 shadow-lg shadow-violet-500/20'
-                            : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
+                        onClick={() => setNewChairId(null)}
+                        className={`chair-btn py-2.5 px-3 rounded-xl text-xs font-bold border transition-all duration-200 flex items-center justify-between gap-1.5 ${
+                          newChairId === null
+                            ? 'chair-btn-selected bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white border-violet-400 shadow-lg shadow-violet-500/20'
+                            : 'chair-btn-unselected bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
                         }`}
                       >
-                        <span className="flex items-center gap-1.5">
-                          <span className="text-sm">💈</span>
-                          <span>{chair.chairName || `Chair ${chair.chairNumber}`}</span>
+                        <span className="flex items-center gap-1.5 truncate">
+                          <span className="text-base">✨</span>
+                          <span className="truncate">{t('detail.anyChair', { defaultValue: 'Any Chair' })}</span>
                         </span>
-                        {chair.barberName && (
-                          <span className={`text-[10px] font-medium pl-5 ${
-                            newChairId === chair.id ? 'text-violet-200' : 'text-slate-500'
-                          }`}>{chair.barberName}</span>
-                        )}
+                        <span className={`chair-btn-badge text-[10px] font-black px-2 py-0.5 rounded-full border shrink-0 ${
+                          totalWaiting === 0
+                            ? (newChairId === null ? 'bg-emerald-400/25 border-emerald-300/40 text-emerald-200' : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400')
+                            : (newChairId === null ? 'bg-white/20 border-white/30 text-white' : 'bg-violet-500/15 border-violet-500/30 text-violet-300')
+                        }`}>
+                          {totalWaiting === 0 ? t('detail.freeNow', { defaultValue: 'Free now' }) : `${totalWaiting} wait`}
+                        </span>
                       </button>
-                    ))}
+
+                      {chairs.map(chair => {
+                        const waiting = chair.waitingCount ?? 0;
+                        const isSelected = String(chair.id) === String(newChairId);
+                        return (
+                          <button
+                            key={chair.id}
+                            type="button"
+                            onClick={() => setNewChairId(chair.id)}
+                            className={`chair-btn py-2.5 px-3 rounded-xl text-xs font-bold border transition-all duration-200 flex flex-col items-start gap-1 ${
+                              isSelected
+                                ? 'chair-btn-selected bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white border-violet-400 shadow-lg shadow-violet-500/20'
+                                : 'chair-btn-unselected bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-1 w-full">
+                              <span className="flex items-center gap-1.5 truncate">
+                                <span className="text-sm">💈</span>
+                                <span className="truncate">{chair.name || chair.chairName || `Chair ${chair.chairNumber}`}</span>
+                              </span>
+                              <span className={`chair-btn-badge text-[10px] font-black px-2 py-0.5 rounded-full border shrink-0 ${
+                                waiting === 0
+                                  ? (isSelected ? 'bg-emerald-400/25 border-emerald-300/40 text-emerald-200' : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400')
+                                  : (isSelected ? 'bg-white/20 border-white/30 text-white' : 'bg-amber-500/15 border-amber-500/30 text-amber-300')
+                              }`}>
+                                {waiting === 0 ? t('detail.freeNow', { defaultValue: 'Free now' }) : `${waiting} ahead`}
+                              </span>
+                            </div>
+                            {chair.barberName && (
+                              <span className={`text-[10px] font-medium truncate ${
+                                isSelected ? 'text-violet-200' : 'text-slate-500'
+                              }`}>{chair.barberName}</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Reschedule live ahead pill */}
+                    <div className={`reschedule-ahead-banner p-3 rounded-xl border text-xs font-medium flex items-center justify-between gap-2 ${
+                      (newChairId === null ? totalWaiting : selectedWaiting) === 0
+                        ? 'reschedule-ahead-banner-free bg-emerald-500/10 border-emerald-500/25 text-emerald-300'
+                        : 'reschedule-ahead-banner-busy bg-violet-500/10 border-violet-500/25 text-violet-200'
+                    }`}>
+                      <span className="truncate">
+                        {newChairId === null ? (
+                          totalWaiting === 0 
+                            ? t('detail.salonFreeNotice', { defaultValue: 'Salon queue is empty! 0 waiting customers ahead' })
+                            : t('detail.anyChairNotice', { count: totalWaiting, defaultValue: `${totalWaiting} customer(s) currently waiting ahead in salon queue` })
+                        ) : (
+                          selectedWaiting === 0
+                            ? t('detail.chairFreeNotice', { chairName: selectedChair?.name || 'This chair', defaultValue: `${selectedChair?.name || 'This chair'} is currently free!` })
+                            : t('detail.chairAheadNotice', { count: selectedWaiting, chairName: selectedChair?.name || 'this chair', defaultValue: `${selectedWaiting} customer(s) ahead of you on this chair` })
+                        )}
+                      </span>
+                      <span className="ahead-pill-badge text-[10px] font-black px-2 py-0.5 rounded-md bg-black/20 border border-white/10 shrink-0">
+                        {(newChairId === null ? totalWaiting : selectedWaiting) === 0 ? '0 Ahead' : `${(newChairId === null ? totalWaiting : selectedWaiting)} Ahead`}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : null;
+              })()}
 
               {/* Time Slots Grid */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-350">{t('detail.chooseNewTime')}</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-350">{t('detail.chooseNewTime')}</label>
+                  {!slotsLoading && slots.length > 0 && (
+                    <span className="text-[10px] font-bold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-full">
+                      {slots.filter(s => s.available).length} {t('detail.emptySlots', { defaultValue: 'empty slot(s)' })}
+                    </span>
+                  )}
+                </div>
                 {slotsLoading ? (
                   <div className="flex items-center gap-2 py-3 text-xs text-slate-400">
                     <Loader className="w-4 h-4 animate-spin text-violet-500" />
@@ -769,7 +847,20 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
                   </div>
                 ) : slots.length > 0 ? (
                   <div className="grid grid-cols-4 gap-2 max-h-[160px] overflow-y-auto pr-1">
-                    {slots.map((slot) => {
+                    {slots
+                      .filter((slot) => {
+                        if (newDate === getLocalDateString()) {
+                          const [h, m] = slot.time.split(':').map(Number);
+                          const now = new Date();
+                          const slotDate = new Date();
+                          slotDate.setHours(h, m, 0, 0);
+                          if (slotDate.getTime() < now.getTime() - 2 * 60 * 1000) {
+                            return false;
+                          }
+                        }
+                        return true;
+                      })
+                      .map((slot) => {
                       const isSelected = newTime === slot.time;
                       const label = slot.breakName ? (
                         slot.breakName.toLowerCase().includes('lunch') ? '☕ Lunch' :

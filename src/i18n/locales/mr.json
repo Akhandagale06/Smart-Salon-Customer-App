@@ -3,9 +3,20 @@
     "title": "स्मार्ट सलून",
     "subTitle": "लाइव्ह रांग आणि त्वरित बुकिंग",
     "home": "सलून शोधा",
+    "homeTitle": "मुख्यपृष्ठ",
+    "bookings": "बुकिंग्स",
     "myAppointments": "माझ्या बुकिंग्स",
     "activeQueue": "लाइव्ह रांग ट्रॅक",
-    "telegram": "अलर्ट मिळवा"
+    "telegram": "अलर्ट मिळवा",
+    "alerts": "अलर्ट्स",
+    "quickMenu": "अलर्ट आणि सेटिंग्ज",
+    "notifications": "सूचना",
+    "notificationsDesc": "रांग आणि बुकिंग अपडेट्स",
+    "telegramAlert": "बॉट अलर्ट मिळवा",
+    "telegramDesc": "रिअल-टाइम टेलिग्राम सूचना",
+    "appearance": "थीम",
+    "darkMode": "डार्क मोड",
+    "lightMode": "लाइट मोड"
   },
   "home": {
     "heroTitle": "थांबणे बंद करा, थेट लाइव्ह रांगेत सामील व्हा",
@@ -64,20 +75,32 @@
     "chooseNewDate": "नवीन तारीख निवडा",
     "chooseNewTime": "नवीन वेळ निवडा",
     "calculatingSlots": "रिकाम्या स्लॉट्स शोधत आहे...",
+    "emptySlots": "रिकामे स्लॉट",
     "noSlots": "निवडलेल्या तारखेसाठी कोणताही स्लॉट उपलब्ध नाही.",
     "cancelModalBtn": "रद्द करा",
     "confirmBtn": "पुष्टी करा",
     "aheadLabel": "आधी",
     "youLabel": "तुम्ही",
     "chooseChair": "खुर्ची निवडा (लागू नसल्यास स्वयंचलित)",
-    "anyChair": "कोणतीही खुर्ची"
+    "anyChair": "कोणतीही खुर्ची",
+    "customersAhead": "{{count}} आधी",
+    "waitingInSalon": "{{count}} रांगेत",
+    "freeNow": "सध्या मोकळी",
+    "availableNow": "उपलब्ध",
+    "liveQueueTitle": "थेट रांगेची स्थिती",
+    "chairAheadNotice": "{{chairName}} वर सध्या तुमच्या आधी {{count}} ग्राहक आहेत",
+    "chairFreeNotice": "{{chairName}} सध्या मोकळी आहे! तुमच्या आधी कोणीही नाही",
+    "anyChairNotice": "सलूनच्या रांगेत सध्या तुमच्या आधी {{count}} ग्राहक आहेत",
+    "salonFreeNotice": "रांग रिकामी आहे! तुमच्या आधी कोणीही ग्राहक नाही",
+    "estimatedWait": "अंदाजे वेळ",
+    "generalQueueNotice": "सलूनमध्ये सध्या तुमच्या आधी {{count}} ग्राहक रांगेत प्रतीक्षा करत आहेत"
   },
   "holiday": {
     "announcementTitle": "🎉 सलून सुट्टीची घोषणा",
     "noticeSub": "सलून मालकाची अधिकृत सुट्टीची सूचना",
     "badge": "सुट्टी",
     "dateLabel": "📅 सुट्टीची तारीख:",
-    "resumeNotice": "✨ सुट्टीनंतर सर्व ऑनलाइन बुकिंग आणि थेट रांग सेवा पूर्ववत सुरू होतील. सहकार्याबद्दल धन्यवाद! 🙏"
+    "resumeNotice": "✨ सुट्टीनंतर सर्व ऑनलाइन बुकिंग सेवा पूर्ववत सुरू होतील. सहकार्याबद्दल धन्यवाद! 🙏"
   },
   "serviceNames": {
     "Haircut": "केस कटींग",

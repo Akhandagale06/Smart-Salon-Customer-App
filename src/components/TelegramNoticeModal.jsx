@@ -85,7 +85,7 @@ const TelegramNoticeModal = ({ isOpen, onClose, userId }) => {
               </p>
               <div className="pt-1">
                 <a
-                  href="https://telegram.org"
+                  href="https://play.google.com/store/apps/details?id=org.telegram.messenger"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-xs font-bold text-sky-400 hover:text-sky-300 underline"

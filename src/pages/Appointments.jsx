@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Calendar, Clock, Scissors, ChevronRight, RefreshCw, Loader, Trash2, Info } from 'lucide-react';
 import api from '../config/api';
 import { formatServiceName } from '../utils/serviceTranslator';
+import { formatToDDMMYYYY } from '../utils/dateUtils';
 
 const Appointments = ({ onSelectAppointment }) => {
   const { t } = useTranslation();
@@ -22,20 +23,7 @@ const Appointments = ({ onSelectAppointment }) => {
   };
 
   const formatDateDMY = (dateStr) => {
-    if (!dateStr) return '';
-    const parts = dateStr.split('-');
-    if (parts.length === 3) {
-      const year = parts[0];
-      const monthIndex = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      const months = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-      ];
-      const monthName = months[monthIndex] || parts[1];
-      return `${day} ${monthName} ${year}`;
-    }
-    return dateStr;
+    return formatToDDMMYYYY(dateStr);
   };
 
   const fetchAppointments = async () => {

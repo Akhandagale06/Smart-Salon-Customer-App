@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatServiceName } from '../utils/serviceTranslator';
-import { isHolidayExpired, isDateOnHoliday } from '../utils/dateUtils';
+import { isHolidayExpired, isDateOnHoliday, getLocalDateString, formatToDDMMYYYY } from '../utils/dateUtils';
 import { 
   ArrowLeft, 
   Star, 
@@ -15,22 +15,51 @@ import {
   Calendar,
   Sparkles,
   Heart,
-  Megaphone
+  Megaphone,
+  Users
 } from 'lucide-react';
 import api from '../config/api';
+import HolidayAnnouncementCard from '../components/HolidayAnnouncementCard';
+import CustomAnnouncementBanner from '../components/CustomAnnouncementBanner';
 
 const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
   const { t,i18n } = useTranslation();
   const [salon, setSalon] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Custom Announcement state with instant local & remote synchronization
+  const [localAnnouncement, setLocalAnnouncement] = useState(() => {
+    return localStorage.getItem(`salon_announcement_${salonId}`) || '';
+  });
+  const [localAnnouncementImg, setLocalAnnouncementImg] = useState(() => {
+    return localStorage.getItem(`salon_announcement_img_${salonId}`) || null;
+  });
+
+  useEffect(() => {
+    const handleSync = () => {
+      setLocalAnnouncement(localStorage.getItem(`salon_announcement_${salonId}`) || '');
+      setLocalAnnouncementImg(localStorage.getItem(`salon_announcement_img_${salonId}`) || null);
+    };
+
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('salon_announcement_updated', handleSync);
+    return () => {
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('salon_announcement_updated', handleSync);
+    };
+  }, [salonId]);
+
+  const activeCustomMessage = salon?.customAnnouncement || localAnnouncement;
+  const activeCustomImage = salon?.customAnnouncementImage || localAnnouncementImg;
   
   // Booking pane states
   const [selectedService, setSelectedService] = useState(null);
-  const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [bookingDate, setBookingDate] = useState(() => getLocalDateString());
   const [bookingTime, setBookingTime] = useState('09:00');
   const [chairs, setChairs] = useState([]);
   const [selectedChairId, setSelectedChairId] = useState(null);
+  const [queueSummary, setQueueSummary] = useState(null);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [slots, setSlots] = useState([]);
@@ -46,20 +75,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
   };
 
   const formatDateDMY = (dateStr) => {
-    if (!dateStr) return '';
-    const parts = dateStr.split('-');
-    if (parts.length === 3) {
-      const year = parts[0];
-      const monthIndex = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      const months = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-      ];
-      const monthName = months[monthIndex] || parts[1];
-      return `${day} ${monthName} ${year}`;
-    }
-    return dateStr;
+    return formatToDDMMYYYY(dateStr);
   };
 
   const getSlotLabel = (slot) => {
@@ -119,11 +135,12 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
 
       const interval = setInterval(() => {
         fetchSalonDetails(true);
+        fetchChairs();
       }, 3000); // 3-second live refresh
 
       return () => clearInterval(interval);
     }
-  }, [salonId]);
+  }, [salonId, bookingDate]);
 
   useEffect(() => {
     fetchSlots();
@@ -167,7 +184,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
   }
 
   const isCurrentHoliday = salon?.holidayDate && !isHolidayExpired(salon.holidayDate);
-  const isBookingDateToday = bookingDate === new Date().toISOString().split('T')[0];
+  const isBookingDateToday = bookingDate === getLocalDateString();
   const isCurrentlyClosed = salon?.isOpen === false;
   const isBookingDateOnHoliday = isDateOnHoliday(bookingDate, salon?.holidayDate);
   const isUnavailable = salon?.mode === 'EMERGENCY' || (salon?.mode === 'BUSY' && isBookingDateToday) || (isCurrentlyClosed && isBookingDateToday) || isBookingDateOnHoliday;
@@ -185,14 +202,28 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
 
       {/* Hero Section */}
       <div className="glass-card rounded-3xl p-6 relative overflow-hidden space-y-4">
-        {/* Dynamic Status Tag */}
-        <div className="flex justify-between items-start gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-white">{salon?.name}</h2>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">By {salon?.ownerName}</p>
+        {/* Dynamic Status Tag and Salon Brand Photo */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            {salon?.profileImage ? (
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border border-slate-700/60 shrink-0 shadow-md">
+                <img src={salon.profileImage} alt={salon.name} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 text-violet-400 shadow-inner">
+                <Scissors className="w-7 h-7" />
+              </div>
+            )}
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white">{salon?.name}</h2>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">By {salon?.ownerName}</p>
+              {salon?.description && (
+                <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 max-w-md">{salon.description}</p>
+              )}
+            </div>
           </div>
           
-          <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full border ${
+          <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full border self-start sm:self-auto shrink-0 ${
             salon?.isOpen === false
               ? 'bg-red-500/10 border-red-500/35 text-red-400'
               : salon?.mode === 'EMERGENCY' 
@@ -221,79 +252,21 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
 
       {/* Animated Holiday Announcement Banner */}
       {isCurrentHoliday && (
-        <div 
-          className="holiday-banner-card relative overflow-hidden p-6 rounded-3xl backdrop-blur-md space-y-4 animate-fade-in group shadow-2xl"
-          style={{
-            background: 'linear-gradient(135deg, #2e1065 0%, #4c1d95 50%, #701a75 100%)',
-            border: '2px solid rgba(167, 139, 250, 0.5)',
-            color: '#ffffff'
-          }}
-        >
-          {/* Animated Glowing Ambient Orbs */}
-          <div className="absolute -top-12 -right-12 w-32 h-32 bg-fuchsia-500/20 rounded-full blur-2xl animate-pulse pointer-events-none" />
-          <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-violet-500/20 rounded-full blur-2xl animate-pulse pointer-events-none" />
+        <HolidayAnnouncementCard
+          holidayDate={salon.holidayDate}
+          holidayReason={salon.holidayReason}
+          holidayMessage={salon.holidayMessage}
+          salonName={salon.name}
+        />
+      )}
 
-          <div className="flex items-center justify-between gap-3 border-b border-violet-400/30 pb-3.5 relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 border border-violet-300/40 flex items-center justify-center text-white shadow-lg shadow-violet-500/30 shrink-0 animate-bounce">
-                <Megaphone className="w-5 h-5 text-amber-300 fill-amber-300/20" />
-              </div>
-              <div>
-                <h4 className="holiday-title font-black text-base tracking-wide flex items-center gap-2" style={{ color: '#ffffff' }}>
-                  {t('holiday.announcementTitle')}
-                </h4>
-                <p className="text-[11px] font-semibold flex items-center gap-1" style={{ color: '#ddd6fe' }}>
-                  <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                  {t('holiday.noticeSub')}
-                </p>
-              </div>
-            </div>
-            <span className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full bg-violet-500/30 border border-violet-300/40 shadow-sm animate-pulse" style={{ color: '#fde047' }}>
-              {t('holiday.badge')}
-            </span>
-          </div>
-
-          <div className="space-y-2.5 relative z-10">
-            <div 
-              className="p-4 rounded-2xl shadow-inner space-y-2"
-              style={{
-                backgroundColor: '#0f172a',
-                border: '1px solid rgba(139, 92, 246, 0.4)'
-              }}
-            >
-              <div className="flex items-center justify-between text-xs font-bold flex-wrap gap-2">
-                <span className="flex items-center gap-1.5" style={{ color: '#c4b5fd' }}>
-                  {t('holiday.dateLabel')} 
-                  <span 
-                    className="text-sm font-black tracking-wider px-2 py-0.5 rounded-lg font-mono"
-                    style={{ color: '#fde047', backgroundColor: 'rgba(245, 158, 11, 0.2)', border: '1px solid rgba(251, 191, 36, 0.5)' }}
-                  >
-                    {salon.holidayDate}
-                  </span>
-                </span>
-                {salon.holidayReason && (
-                  <span 
-                    className="font-extrabold text-xs flex items-center gap-1 px-2.5 py-0.5 rounded-lg"
-                    style={{ color: '#f0abfc', backgroundColor: 'rgba(217, 70, 239, 0.2)', border: '1px solid rgba(232, 121, 249, 0.5)' }}
-                  >
-                    {salon.holidayReason}
-                  </span>
-                )}
-              </div>
-              {salon.holidayMessage && (
-                <p 
-                  className="text-xs font-bold italic pt-2 border-t"
-                  style={{ color: '#ffffff', borderColor: 'rgba(139, 92, 246, 0.35)' }}
-                >
-                  "{salon.holidayMessage}"
-                </p>
-              )}
-            </div>
-            <p className="text-[11px] font-semibold flex items-center gap-1.5 pt-0.5" style={{ color: '#e9d5ff' }}>
-              <span>{t('holiday.resumeNotice')}</span>
-            </p>
-          </div>
-        </div>
+      {/* 📢 Custom Announcement & Banner from Salon Owner */}
+      {(activeCustomMessage || activeCustomImage) && (
+        <CustomAnnouncementBanner
+          message={activeCustomMessage}
+          imageUrl={activeCustomImage}
+          salonName={salon?.name || 'Salon'}
+        />
       )}
 
       {/* Closed notice */}
@@ -450,7 +423,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
                   <input
                     id="booking-date-picker"
                     type="date"
-                    min={new Date().toISOString().split('T')[0]}
+                    min={getLocalDateString()}
                     value={bookingDate}
                     onChange={(e) => setBookingDate(e.target.value)}
                     className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
@@ -459,75 +432,128 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
                 {isBookingDateOnHoliday && (
                   <p className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/25 p-2.5 rounded-xl flex items-center gap-2 mt-1.5">
                     <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
-                    <span>Salon is closed on holiday on this date ({salon?.holidayDate}). Please pick another date for booking.</span>
+                    <span>Salon is closed on holiday on this date ({formatToDDMMYYYY(salon?.holidayDate)}). Please pick another date for booking.</span>
                   </p>
                 )}
               </div>
 
               {/* Chair / Barber Preference Selector */}
               {chairs.length > 1 && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-400">Select Barber / Chair Preference</label>
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2.5">
+                  <label className="text-xs font-semibold text-slate-350">
+                    {t('detail.chooseChair', { defaultValue: 'Select Barber / Chair Preference' })}
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {/* Any Chair (Auto) */}
                     <button
                       type="button"
                       onClick={() => setSelectedChairId(null)}
-                      className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-left ${
+                      className={`chair-btn p-3 rounded-2xl border text-xs font-bold transition-all duration-200 text-left flex flex-col justify-between gap-1.5 relative overflow-hidden ${
                         selectedChairId === null
-                          ? 'bg-violet-600 border-violet-500 text-white shadow-lg'
-                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                          ? 'chair-btn-selected bg-gradient-to-br from-violet-600 to-fuchsia-600 border-violet-400 text-white shadow-lg shadow-violet-500/25 ring-2 ring-violet-400/40'
+                          : 'chair-btn-unselected bg-slate-950/80 border-slate-800/80 text-slate-300 hover:text-white hover:border-slate-700 hover:bg-slate-900/60'
                       }`}
                     >
-                      ✨ Any Chair (Auto)
+                      <div className="flex items-center justify-between gap-1.5 w-full">
+                        <span className="font-extrabold flex items-center gap-1.5 truncate">
+                          <span className="text-sm">✨</span>
+                          <span className="truncate">{t('detail.anyChair', { defaultValue: 'Any Chair' })}</span>
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                          selectedChairId === null
+                            ? 'bg-white/20 border-white/30 text-white'
+                            : 'bg-slate-800 border-slate-700 text-slate-400'
+                        }`}>
+                          Auto-assign
+                        </span>
+                      </div>
+                      <span className={`text-[10px] truncate ${selectedChairId === null ? 'text-violet-100' : 'text-slate-400'}`}>
+                        Fastest available chair
+                      </span>
                     </button>
-                    {chairs.map((chair) => (
-                      <button
-                        key={chair.id}
-                        type="button"
-                        onClick={() => setSelectedChairId(chair.id)}
-                        className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-left truncate ${
-                          selectedChairId === chair.id
-                            ? 'bg-violet-600 border-violet-500 text-white shadow-lg'
-                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
-                        }`}
-                      >
-                        💈 {chair.barberName ? `${chair.name} (${chair.barberName})` : chair.name}
-                      </button>
-                    ))}
+
+                    {/* Specific Chairs */}
+                    {chairs.map((chair) => {
+                      const isSelected = String(chair.id) === String(selectedChairId);
+                      return (
+                        <button
+                          key={chair.id}
+                          type="button"
+                          onClick={() => setSelectedChairId(chair.id)}
+                          className={`chair-btn p-3 rounded-2xl border text-xs font-bold transition-all duration-200 text-left flex flex-col justify-between gap-1.5 relative overflow-hidden ${
+                            isSelected
+                              ? 'chair-btn-selected bg-gradient-to-br from-violet-600 to-fuchsia-600 border-violet-400 text-white shadow-lg shadow-violet-500/25 ring-2 ring-violet-400/40'
+                              : 'chair-btn-unselected bg-slate-950/80 border-slate-800/80 text-slate-300 hover:text-white hover:border-slate-700 hover:bg-slate-900/60'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1.5 w-full">
+                            <span className="font-extrabold flex items-center gap-1.5 truncate">
+                              <span className="text-sm">💈</span>
+                              <span className="truncate">{chair.name || `Chair ${chair.chairNumber}`}</span>
+                            </span>
+                          </div>
+                          <span className={`text-[10px] truncate ${isSelected ? 'text-violet-100' : 'text-slate-400'}`}>
+                            {chair.barberName ? `✂️ ${chair.barberName}` : `Chair ${chair.chairNumber}`}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
               {/* Time Slots Grid */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400">Available Time Slots</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-400">Available Time Slots</label>
+                  {!slotsLoading && slots.length > 0 && (
+                    <span className="text-[10px] font-bold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-full">
+                      {slots.filter(s => s.available).length} {t('detail.emptySlots', { defaultValue: 'empty slot(s)' })}
+                    </span>
+                  )}
+                </div>
                 {slotsLoading ? (
                   <div className="flex items-center gap-2 py-3 text-xs text-slate-400">
                     <Loader className="w-4 h-4 animate-spin text-violet-500" />
-                    Calculating empty slots...
+                    {t('detail.calculatingSlots', { defaultValue: 'Calculating empty slots...' })}
                   </div>
                 ) : slots.length > 0 ? (
-                  <div className="grid grid-cols-4 gap-2 max-h-[160px] overflow-y-auto pr-1">
-                    {slots.map((slot) => (
-                      <button
-                        key={slot.time}
-                        type="button"
-                        disabled={!slot.available}
-                        onClick={() => setBookingTime(slot.time)}
-                        title={slot.breakName || undefined}
-                        className={`py-2 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300 border ${
-                          bookingTime === slot.time
-                            ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white border-violet-400'
-                            : slot.breakName
-                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 cursor-not-allowed opacity-75'
-                            : slot.available
-                            ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800'
-                            : 'bg-slate-950 text-slate-650 border-slate-900 cursor-not-allowed opacity-40'
-                        }`}
-                      >
-                        {getSlotLabel(slot)}
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-4 gap-2 max-h-[180px] overflow-y-auto pr-1">
+                    {slots
+                      .filter((slot) => {
+                        // When booking for today, omit past slots from earlier hours
+                        if (bookingDate === getLocalDateString()) {
+                          const [h, m] = slot.time.split(':').map(Number);
+                          const now = new Date();
+                          const slotDate = new Date();
+                          slotDate.setHours(h, m, 0, 0);
+                          if (slotDate.getTime() < now.getTime() - 2 * 60 * 1000) {
+                            return false;
+                          }
+                        }
+                        return true;
+                      })
+                      .map((slot) => (
+                        <button
+                          key={slot.time}
+                          type="button"
+                          disabled={!slot.available}
+                          onClick={() => setBookingTime(slot.time)}
+                          title={slot.breakName ? `Break: ${slot.breakName}` : (!slot.available ? 'Slot Booked' : 'Available')}
+                          className={`py-2 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300 border ${
+                            bookingTime === slot.time
+                              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white border-violet-400 shadow-md shadow-violet-500/20'
+                              : slot.breakName
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 cursor-not-allowed opacity-75'
+                              : slot.available
+                              ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800 hover:border-slate-700'
+                              : 'bg-slate-950 text-slate-600 border-slate-900 cursor-not-allowed opacity-40'
+                          }`}
+                        >
+                          {getSlotLabel(slot)}
+                        </button>
+                      ))}
                   </div>
                 ) : (
                   <p className="text-xs text-slate-500 py-2">No slots available for the selected date.</p>

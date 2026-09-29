@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Star, MapPin, Clock, AlertTriangle, Zap, CheckCircle2 } from 'lucide-react';
+import { MapPin, Store, Pin } from 'lucide-react';
 
-const SalonCard = ({ salon, onClick }) => {
+const SalonCard = ({ salon, onClick, isFavorite = false, onToggleFavorite }) => {
   const { t } = useTranslation();
   
   const getModeDetails = () => {
@@ -40,48 +40,73 @@ const SalonCard = ({ salon, onClick }) => {
   return (
     <div 
       onClick={onClick}
-      className="glass-card rounded-2xl p-4 hover:border-slate-800 transition-all duration-300 flex items-start gap-4 cursor-pointer active:scale-[0.98]"
+      className={`glass-card rounded-2xl p-3.5 sm:p-4 transition-all duration-300 flex items-start gap-3.5 sm:gap-4 cursor-pointer active:scale-[0.98] relative group w-full max-w-[420px] ${
+        isFavorite
+          ? 'border-violet-500/40 bg-slate-900/90 shadow-lg shadow-violet-500/10 ring-1 ring-violet-500/20'
+          : 'hover:border-slate-800'
+      }`}
     >
       {/* Thumbnail */}
-      <div className="w-20 h-20 rounded-xl bg-slate-900 border border-slate-850 flex items-center justify-center font-bold text-violet-400 shadow-inner shrink-0 relative overflow-hidden">
+      <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-xl bg-slate-900 border border-slate-850 flex items-center justify-center font-bold text-violet-400 shadow-inner shrink-0 relative overflow-hidden">
         {salon.profileImage ? (
-          <img src={salon.profileImage} alt={salon.name} className="w-full h-full object-cover" />
+          <img src={salon.profileImage} alt={salon.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         ) : (
-          <StoreIcon className="w-8 h-8 text-slate-700" />
+          <Store className="w-7 h-7 sm:w-8 sm:h-8 text-slate-700" />
+        )}
+
+        {/* Pinned Indicator on Thumbnail */}
+        {isFavorite && (
+          <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-violet-600/95 text-white text-[9px] font-black flex items-center gap-0.5 shadow-md backdrop-blur-sm">
+            <Pin className="w-2.5 h-2.5 fill-white" />
+            <span>PINNED</span>
+          </div>
         )}
       </div>
 
       {/* Details */}
-      <div className="flex-1 min-w-0 space-y-1.5">
-        <div className="flex justify-between items-start gap-2">
-          <h3 className="font-bold text-slate-100 text-sm truncate leading-snug">
+      <div className="flex-1 min-w-0 space-y-1 pr-14 sm:pr-16">
+        <div>
+          <h3 className="font-bold text-slate-100 text-sm truncate leading-snug group-hover:text-violet-300 transition-colors">
             {salon.name}
           </h3>
-          <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border shrink-0 ${mode.bg}`}>
-            {mode.label}
-          </span>
+          <p className="text-[10px] text-violet-400 font-bold -mt-0.5 flex items-center gap-1">
+            Owner: <span className="text-slate-300 font-semibold truncate">{salon.ownerName || 'Sudam Khandagale'}</span>
+          </p>
         </div>
 
-        <p className="text-[10px] text-violet-450 font-bold -mt-0.5 flex items-center gap-1">
-          Owner: <span className="text-slate-300 font-semibold">{salon.ownerName || 'Sudam Khandagale'}</span>
+        {/* Address info row */}
+        <p className="text-xs text-slate-400 truncate flex items-center gap-1">
+          <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+          <span className="truncate">{salon.address}</span>
         </p>
-
-        {/* Info row */}
-        <p className="text-xs text-slate-450 truncate flex items-center gap-1">
-          <MapPin className="w-3.5 h-3.5 text-slate-500" />
-          {salon.address}
-        </p>
-
-
       </div>
+
+      {/* Top Right Corner: Status Badge (Open Now / Paused / Closed) */}
+      <span className={`absolute top-2.5 right-2.5 sm:top-3 sm:right-3 text-[9px] font-extrabold px-2 py-0.5 rounded-full border shadow-sm z-10 ${mode.bg}`}>
+        {mode.label}
+      </span>
+
+      {/* Pin Salon Button - Placed in Bottom Right Corner */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (onToggleFavorite) onToggleFavorite(salon.id, e);
+        }}
+        title={isFavorite ? 'Unpin salon' : 'Pin salon to top'}
+        aria-label={isFavorite ? 'Unpin salon' : 'Pin salon to top'}
+        className={`absolute bottom-2.5 right-2.5 sm:bottom-3 sm:right-3 p-1.5 rounded-xl border transition-all cursor-pointer active:scale-90 flex items-center justify-center z-10 ${
+          isFavorite
+            ? 'bg-violet-600 border-violet-500 text-white shadow-md shadow-violet-600/30 hover:bg-violet-500'
+            : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-violet-300 hover:border-violet-500/40 hover:bg-slate-800/90'
+        }`}
+      >
+        <Pin className={`w-3.5 h-3.5 transition-transform duration-200 ${
+          isFavorite ? 'fill-white rotate-45 scale-105' : 'group-hover:rotate-12'
+        }`} />
+      </button>
     </div>
   );
 };
-
-const StoreIcon = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-  </svg>
-);
 
 export default SalonCard;

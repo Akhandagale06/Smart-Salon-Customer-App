@@ -208,9 +208,18 @@
 }
 
 .live-queue-wait-pill {
-  background-color: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  color: #ede9fe;
+  background-color: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(139, 92, 246, 0.4);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.live-queue-wait-pill .wait-pill-text {
+  color: #ffffff;
+}
+
+.live-queue-wait-pill .wait-pill-time {
+  color: #c4b5fd;
 }
 
 .live-queue-break-banner {
@@ -276,13 +285,31 @@
   font-weight: 700 !important;
 }
 
-.live-queue-wait-pill,
-.live-queue-wait-pill *,
-.live-queue-wait-pill span,
+.theme-light .live-queue-wait-pill {
+  background-color: #ffffff !important;
+  border: 1.5px solid #c7d2fe !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+}
+
 .theme-light .live-queue-wait-pill,
-.theme-light .live-queue-wait-pill * {
-  color: #ffffff !important;
+.theme-light .live-queue-wait-pill *,
+.theme-light .live-queue-wait-pill span,
+.theme-light .live-queue-wait-pill .wait-pill-text {
+  color: #1e1b4b !important;
   font-weight: 900 !important;
+}
+
+.theme-light .live-queue-wait-pill .wait-pill-time {
+  color: #4f46e5 !important;
+  font-weight: 900 !important;
+}
+
+.theme-light .live-queue-wait-pill .wait-pill-hourglass-icon {
+  color: #4f46e5 !important;
+}
+
+.theme-light .live-queue-wait-pill .wait-pill-coffee-icon {
+  color: #d97706 !important;
 }
 
 .theme-light .live-queue-break-banner {
@@ -300,34 +327,43 @@
    HOLIDAY ANNOUNCEMENT BANNER STYLES
    ========================================== */
 
-.holiday-banner-card,
+.holiday-banner-card {
+  transition: all 0.3s ease;
+}
+
+/* Light Theme overrides for holiday banner */
 .theme-light .holiday-banner-card {
-  background: linear-gradient(135deg, #2e1065 0%, #4c1d95 50%, #701a75 100%) !important;
-  border: 2px solid rgba(167, 139, 250, 0.5) !important;
-  color: #ffffff !important;
+  background: #ffffff !important;
+  border-color: #e0e7ff !important;
+  color: #0f172a !important;
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.08) !important;
 }
 
-.holiday-banner-card h4,
-.theme-light .holiday-banner-card h4,
-.holiday-banner-card h3,
 .theme-light .holiday-banner-card h3,
-.holiday-banner-card .holiday-title,
-.theme-light .holiday-banner-card .holiday-title {
-  color: #ffffff !important;
-  font-weight: 900 !important;
+.theme-light .holiday-banner-card h4 {
+  color: #0f172a !important;
 }
 
-.holiday-banner-card p,
-.theme-light .holiday-banner-card p {
-  color: #e9d5ff !important;
+.theme-light .holiday-banner-card p.holiday-sub {
+  color: #64748b !important;
+}
+
+.theme-light .holiday-banner-card .holiday-quote {
+  color: #334155 !important;
+}
+
+.theme-light .holiday-banner-card .holiday-strip-text {
+  color: #4338ca !important;
 }
 
 /* ==============================
    LIGHT THEME OVERRIDES
    ============================== */
 
+html.theme-light,
+body.theme-light,
 .theme-light {
-  background-color: #f1f5f9 !important;
+  background-color: #f8fafc !important;
   color: #0f172a !important;
 }
 
@@ -338,21 +374,22 @@
 
 /* Glass panels & cards */
 .theme-light .glass-panel {
-  background: rgba(255, 255, 255, 0.95) !important;
+  background: rgba(255, 255, 255, 0.98) !important;
   border-color: #cbd5e1 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
 }
 
 .theme-light .glass-card {
-  background: rgba(255, 255, 255, 0.92) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
   border-color: rgba(203, 213, 225, 0.9) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
 }
 
-.theme-light .glass-modal {
-  background: rgba(255, 255, 255, 0.98) !important;
+.theme-light .glass-modal,
+.theme-light [role="dialog"] {
+  background: #ffffff !important;
   border-color: #cbd5e1 !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18) !important;
   color: #0f172a !important;
 }
 
@@ -364,7 +401,7 @@
 
 /* Headers */
 .theme-light header {
-  background-color: rgba(255, 255, 255, 0.95) !important;
+  background-color: rgba(255, 255, 255, 0.98) !important;
   border-color: #cbd5e1 !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
 }
@@ -388,6 +425,28 @@
 
 .theme-light header input::placeholder {
   color: #64748b !important;
+}
+
+/* Language selector button in light mode */
+.theme-light .lang-selector-btn {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.theme-light .lang-selector-btn span {
+  color: #000000 !important;
+  font-weight: 800 !important;
+}
+
+.theme-light .lang-selector-btn:hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+}
+
+.theme-light .force-text-white,
+.theme-light .force-text-white * {
+  color: #ffffff !important;
 }
 
 /* Headings & dark text overrides */
@@ -417,6 +476,11 @@
   color: #475569 !important;
 }
 
+.theme-light .text-violet-400,
+.theme-light .text-violet-300 {
+  color: #6366f1 !important;
+}
+
 /* Inputs & Form controls */
 .theme-light input,
 .theme-light select,
@@ -431,10 +495,28 @@
   color: #64748b !important;
 }
 
-/* Background overrides for main containers */
-.theme-light main .bg-slate-950,
-.theme-light main .bg-slate-900 {
+.theme-light select option {
   background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Background overrides for containers and cards (no longer restricted to main) */
+.theme-light .bg-slate-950,
+.theme-light .bg-slate-950\/50,
+.theme-light .bg-slate-950\/60,
+.theme-light .bg-slate-950\/80,
+.theme-light .bg-slate-900,
+.theme-light .bg-slate-900\/50,
+.theme-light .bg-slate-900\/60,
+.theme-light .bg-slate-900\/80,
+.theme-light .bg-slate-900\/90 {
+  background-color: #ffffff !important;
+}
+
+.theme-light .hover\:bg-slate-900\/90:hover,
+.theme-light .hover\:bg-slate-900:hover,
+.theme-light .hover\:bg-slate-800:hover {
+  background-color: #f1f5f9 !important;
 }
 
 .theme-light .bg-slate-850 {
@@ -446,7 +528,7 @@
 .theme-light .bg-slate-800\/50,
 .theme-light .bg-slate-800\/60,
 .theme-light .bg-slate-800\/80 {
-  background-color: #e2e8f0 !important;
+  background-color: #f1f5f9 !important;
 }
 
 /* Borders */
@@ -506,9 +588,172 @@
 /* Preserve white text on primary gradient buttons */
 .theme-light button.bg-gradient-to-r *,
 .theme-light button.bg-gradient-to-tr *,
+.theme-light button.bg-gradient-to-br *,
 .theme-light button[class*="bg-violet-600"] *,
 .theme-light a.bg-gradient-to-r * {
   color: #ffffff !important;
+}
+
+/* ============================================================
+   CHAIR PREFERENCE SELECTOR & LIVE AHEAD BANNER (LIGHT THEME)
+   ============================================================ */
+
+/* Unselected Chair Buttons in Light Mode */
+.theme-light .chair-btn-unselected {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+.theme-light .chair-btn-unselected:hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+}
+
+.theme-light .chair-btn-unselected span {
+  color: #0f172a !important;
+}
+
+.theme-light .chair-btn-unselected .text-slate-400,
+.theme-light .chair-btn-unselected .text-slate-500 {
+  color: #475569 !important;
+}
+
+.theme-light .chair-btn-unselected .chair-btn-badge {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+  font-weight: 800 !important;
+}
+
+.theme-light .chair-btn-unselected .chair-btn-badge.text-emerald-400,
+.theme-light .chair-btn-unselected .chair-btn-badge.text-emerald-300 {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+
+.theme-light .chair-btn-unselected .chair-btn-badge.text-amber-300,
+.theme-light .chair-btn-unselected .chair-btn-badge.text-amber-400 {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+
+.theme-light .chair-btn-unselected .chair-btn-badge.text-violet-300,
+.theme-light .chair-btn-unselected .chair-btn-badge.text-violet-400 {
+  background-color: #f5f3ff !important;
+  border-color: #ddd6fe !important;
+  color: #6d28d9 !important;
+}
+
+/* Selected Chair Button in Light Mode */
+.theme-light .chair-btn-selected {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
+  border-color: #6d28d9 !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3) !important;
+}
+
+.theme-light .chair-btn-selected,
+.theme-light .chair-btn-selected *,
+.theme-light .chair-btn-selected span {
+  color: #ffffff !important;
+}
+
+.theme-light .chair-btn-selected .chair-btn-badge {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+}
+
+/* Live Ahead Status Banner - Busy (Waiting > 0) in Light Mode */
+.theme-light .chair-ahead-banner-busy {
+  background: linear-gradient(135deg, #f5f3ff 0%, #faf5ff 50%, #fdf4ff 100%) !important;
+  border: 1.5px solid #c4b5fd !important;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.1) !important;
+}
+
+.theme-light .chair-ahead-banner-busy .chair-ahead-icon-box {
+  background-color: #ede9fe !important;
+  border-color: #c4b5fd !important;
+  color: #7c3aed !important;
+}
+
+.theme-light .chair-ahead-banner-busy .chair-ahead-title,
+.theme-light .chair-ahead-banner-busy .chair-ahead-title * {
+  color: #4c1d95 !important;
+  font-weight: 900 !important;
+}
+
+.theme-light .chair-ahead-banner-busy .chair-ahead-pill {
+  background-color: #ede9fe !important;
+  border-color: #c4b5fd !important;
+  color: #6d28d9 !important;
+  font-weight: 900 !important;
+}
+
+.theme-light .chair-ahead-banner-busy .chair-ahead-desc {
+  color: #334155 !important;
+  font-weight: 600 !important;
+}
+
+/* Live Ahead Status Banner - Free (0 Waiting) in Light Mode */
+.theme-light .chair-ahead-banner-free {
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%) !important;
+  border: 1.5px solid #a7f3d0 !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08) !important;
+}
+
+.theme-light .chair-ahead-banner-free .chair-ahead-icon-box {
+  background-color: #d1fae5 !important;
+  border-color: #a7f3d0 !important;
+  color: #059669 !important;
+}
+
+.theme-light .chair-ahead-banner-free .chair-ahead-title,
+.theme-light .chair-ahead-banner-free .chair-ahead-title * {
+  color: #065f46 !important;
+  font-weight: 900 !important;
+}
+
+.theme-light .chair-ahead-banner-free .chair-ahead-pill {
+  background-color: #d1fae5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+  font-weight: 900 !important;
+}
+
+.theme-light .chair-ahead-banner-free .chair-ahead-desc {
+  color: #166534 !important;
+  font-weight: 600 !important;
+}
+
+/* Reschedule Modal Live Ahead in Light Mode */
+.theme-light .reschedule-ahead-banner {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+.theme-light .reschedule-ahead-banner-busy {
+  background-color: #f5f3ff !important;
+  border-color: #ddd6fe !important;
+  color: #4c1d95 !important;
+}
+
+.theme-light .reschedule-ahead-banner-free {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #065f46 !important;
+}
+
+.theme-light .ahead-pill-badge {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
 }
 
 /* Scrollbars in light theme */

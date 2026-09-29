@@ -73,7 +73,7 @@ const MainApp = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${theme === 'light' ? 'theme-light bg-slate-50' : 'bg-slate-950'}`}>
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-violet-500"></div>
       </div>
     );
@@ -81,7 +81,7 @@ const MainApp = () => {
 
   if (activeWalkInSalonId) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+      <div className={`min-h-screen flex flex-col font-sans ${theme === 'light' ? 'theme-light bg-slate-100 text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
         <main className="flex-1 p-6 overflow-y-auto w-full max-w-md mx-auto">
           <WalkInQueue 
             salonId={activeWalkInSalonId} 
@@ -99,11 +99,19 @@ const MainApp = () => {
   }
 
   if (!isAuthenticated) {
-    return <Login />;
+    return (
+      <div className={theme === 'light' ? 'theme-light' : ''}>
+        <Login />
+      </div>
+    );
   }
 
   if (!user?.name || user.name.trim() === '') {
-    return <Login forceStep3={true} />;
+    return (
+      <div className={theme === 'light' ? 'theme-light' : ''}>
+        <Login forceStep3={true} />
+      </div>
+    );
   }
 
   const renderContent = () => {

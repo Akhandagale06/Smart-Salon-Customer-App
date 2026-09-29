@@ -2,6 +2,15 @@
  * Utility functions for parsing and checking holiday dates and ranges.
  */
 
+// Returns local system date formatted as "YYYY-MM-DD" (without UTC timezone shifting)
+export const getLocalDateString = (date = new Date()) => {
+  const d = date instanceof Date ? date : new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // Helper to parse a single date string into a Date object at midnight (00:00:00) local time
 export const parseHolidaySingleDate = (str) => {
   if (!str) return null;
@@ -92,4 +101,46 @@ export const isDateOnHoliday = (checkDateInput, holidayDateStr) => {
   const targetTime = checkDate.getTime();
 
   return targetTime >= startTime && targetTime <= endTime;
+};
+
+// Formats any date string (ISO, YYYY-MM-DD, date ranges "start to end", or Date object) into DD/MM/YYYY
+export const formatToDDMMYYYY = (dateStr) => {
+  if (!dateStr) return '';
+
+  if (typeof dateStr === 'string' && dateStr.includes(' to ')) {
+    return dateStr
+      .split(' to ')
+      .map(part => formatToDDMMYYYY(part.trim()))
+      .join(' to ');
+  }
+
+  const str = String(dateStr).trim();
+
+  // Already DD/MM/YYYY
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+    return str;
+  }
+
+  // DD-MM-YYYY
+  if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
+    return str.replace(/-/g, '/');
+  }
+
+  // YYYY-MM-DD or YYYY/MM/DD
+  const ymdMatch = str.match(/^(\d{4})[-\/](\d{2})[-\/](\d{2})/);
+  if (ymdMatch) {
+    const [, year, month, day] = ymdMatch;
+    return `${day}/${month}/${year}`;
+  }
+
+  // Fallback for valid Date
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    const day = String(parsed.getDate()).padStart(2, '0');
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const year = parsed.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  return str;
 };
