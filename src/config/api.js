@@ -4,8 +4,13 @@ const getBaseURL = () => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
   if (envUrl) return envUrl;
   
-  // Dynamically resolve backend to current host's IP/hostname on port 8080
-  const hostname = window.location.hostname;
+  // If running on HTTPS or deployed domain (e.g. Cloudflare Pages), use the production Render backend
+  if (typeof window !== 'undefined' && (window.location.protocol === 'https:' || window.location.hostname.includes('pages.dev'))) {
+    return 'https://salon-queue-backend-0mul.onrender.com';
+  }
+
+  // Local fallback (localhost / local network IP on port 8080)
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
   return `http://${hostname}:8080`;
 };
 
