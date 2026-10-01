@@ -220,6 +220,7 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
       if (minsUntil !== null && minsUntil > 2) {
         const formattedSlot = formatTime12Hr(appointment.bookingTime);
         const isSoon = minsUntil <= 10;
+        const formattedWait = formatWaitTime(minsUntil, t);
 
         return (
           <div className="live-queue-card flex flex-col items-center py-4 px-5 bg-gradient-to-b from-violet-900/40 via-slate-900/90 to-fuchsia-950/50 border-2 border-violet-500/40 rounded-3xl space-y-3.5 shadow-2xl my-2 max-w-sm mx-auto animate-fade-in relative overflow-hidden text-white">
@@ -249,13 +250,13 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
             <div className="text-center space-y-1">
               <h3 className="text-base sm:text-lg font-black tracking-tight text-white drop-shadow-sm animate-pulse">
                 {isSoon
-                  ? t('detail.yourTurnComesInSoon', { min: minsUntil })
-                  : t('detail.yourTurnComesIn', { min: minsUntil, time: formattedSlot })
+                  ? t('detail.yourTurnComesInSoon', { min: formattedWait, waitTime: formattedWait })
+                  : t('detail.yourTurnComesIn', { min: formattedWait, waitTime: formattedWait, time: formattedSlot })
                 }
               </h3>
               <p className="text-xs text-white font-semibold max-w-xs mx-auto leading-relaxed">
                 {isSoon
-                  ? t('detail.getReadySub', { min: minsUntil, time: formattedSlot })
+                  ? t('detail.getReadySub', { min: formattedWait, waitTime: formattedWait, time: formattedSlot })
                   : t('detail.noOneAheadSub', { time: formattedSlot })
                 }
               </p>
@@ -438,13 +439,15 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
   const [slots, setSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
-  const fetchSlotsForReschedule = async () => {
+  const fetchSlotsForReschedule = async (isSilent = false) => {
     if (!appointment?.salonId || !newDate) return;
     try {
-      setSlotsLoading(true);
+      if (!isSilent) setSlotsLoading(true);
       const serviceParam = appointment.serviceId ? `&serviceId=${appointment.serviceId}` : '';
       const chairParam = newChairId ? `&preferredChairId=${newChairId}` : '';
-      const res = await api.get(`/api/salons/${appointment.salonId}/slots?date=${newDate}${serviceParam}${chairParam}&excludeAppointmentId=${appointmentId}`);
+      const res = await api.get(`/api/salons/${appointment.salonId}/slots?date=${newDate}${serviceParam}${chairParam}&excludeAppointmentId=${appointmentId}&_t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      });
       const fetchedSlots = res.data?.data || [];
       setSlots(fetchedSlots);
       
@@ -459,18 +462,22 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
       }
     } catch (err) {
       console.error('Failed to load slots for reschedule:', err);
-      setSlots([]);
-      setNewTime('');
+      if (!isSilent) {
+        setSlots([]);
+        setNewTime('');
+      }
     } finally {
-      setSlotsLoading(false);
+      if (!isSilent) setSlotsLoading(false);
     }
   };
 
   const fetchChairsForReschedule = async () => {
     if (!appointment?.salonId) return;
     try {
-      const dateParam = newDate ? `?date=${newDate}` : '';
-      const res = await api.get(`/api/salons/${appointment.salonId}/chairs/active${dateParam}`);
+      const dateParam = newDate ? `?date=${newDate}&_t=${Date.now()}` : `?_t=${Date.now()}`;
+      const res = await api.get(`/api/salons/${appointment.salonId}/chairs/active${dateParam}`, {
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      });
       const fetchedChairs = res.data?.data || [];
       setChairs(fetchedChairs);
       // Pre-select the appointment's current preferred chair if it exists
@@ -485,8 +492,13 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
 
   useEffect(() => {
     if (rescheduleOpen && newDate) {
-      fetchSlotsForReschedule();
+      fetchSlotsForReschedule(false);
       fetchChairsForReschedule();
+
+      const interval = setInterval(() => {
+        fetchSlotsForReschedule(true);
+      }, 3000); // 3-second live refresh
+      return () => clearInterval(interval);
     }
   }, [newDate, newChairId, rescheduleOpen]);
 

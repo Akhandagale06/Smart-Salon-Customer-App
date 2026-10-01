@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Calendar, Bell, User, Sparkles, X, Bot, Sun, Moon, ChevronDown, ChevronRight, Home } from 'lucide-react';
+import { Search, Calendar, Bell, User, Sparkles, X, Bot, Sun, Moon, ChevronDown, ChevronRight, Home, Info, ShieldCheck, Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -10,6 +10,7 @@ const AlertsDropdown = ({
   activeTab,
   onOpenTelegramNotice,
   handleNotificationsClick,
+  onNavigateTab,
   toggleTheme,
   t
 }) => {
@@ -199,6 +200,85 @@ const AlertsDropdown = ({
                 </div>
               </div>
             </div>
+
+            {/* Divider: Trust & Transparency */}
+            <div className={`px-2.5 pt-2 pb-1 border-t flex items-center justify-between mt-1 ${
+              theme === 'light' ? 'border-slate-100 text-slate-400' : 'border-slate-800/80 text-slate-500'
+            }`}>
+              <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                {t('nav.trustSection', { defaultValue: 'Trust & Verification' })}
+              </span>
+            </div>
+
+            {/* 4. About Us */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                if (onNavigateTab) onNavigateTab('about');
+              }}
+              className={`w-full flex items-center justify-between p-2.5 rounded-xl transition-all text-left cursor-pointer group border ${
+                activeTab === 'about'
+                  ? theme === 'light'
+                    ? 'bg-violet-50 border-violet-300/80 shadow-sm'
+                    : 'bg-violet-600/20 border-violet-500/40 shadow-sm'
+                  : theme === 'light'
+                    ? 'hover:bg-slate-50 border-transparent hover:border-slate-200'
+                    : 'hover:bg-slate-800/60 border-transparent hover:border-slate-700/60'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-violet-500/15 text-violet-400 group-hover:scale-105 transition-transform shrink-0">
+                  <Info className="w-4 h-4 text-violet-500" />
+                </div>
+                <div className="flex flex-col">
+                  <div className="text-xs sm:text-sm font-bold flex items-center gap-1.5">
+                    <span>{t('nav.about', { defaultValue: 'About Us' })}</span>
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium">
+                    {t('nav.aboutDesc', { defaultValue: 'Mission & Queue Transparency' })}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
+
+            {/* 5. Privacy Policy */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                if (onNavigateTab) onNavigateTab('privacy');
+              }}
+              className={`w-full flex items-center justify-between p-2.5 rounded-xl transition-all text-left cursor-pointer group border ${
+                activeTab === 'privacy'
+                  ? theme === 'light'
+                    ? 'bg-emerald-50 border-emerald-300/80 shadow-sm'
+                    : 'bg-emerald-600/20 border-emerald-500/40 shadow-sm'
+                  : theme === 'light'
+                    ? 'hover:bg-slate-50 border-transparent hover:border-slate-200'
+                    : 'hover:bg-slate-800/60 border-transparent hover:border-slate-700/60'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+                  <Lock className="w-4 h-4 text-emerald-500" />
+                </div>
+                <div className="flex flex-col">
+                  <div className="text-xs sm:text-sm font-bold flex items-center gap-1.5">
+                    <span>{t('nav.privacyPolicy', { defaultValue: 'Privacy Policy' })}</span>
+                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                      {t('nav.verified', { defaultValue: 'VERIFIED' })}
+                    </span>
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium">
+                    {t('nav.privacyDesc', { defaultValue: 'Data Protection & Security' })}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
           </div>
         </div>
       )}
@@ -373,6 +453,7 @@ const Header = ({ activeTab, setActiveTab, searchTerm, setSearchTerm, onLogoClic
                 activeTab={activeTab}
                 onOpenTelegramNotice={onOpenTelegramNotice}
                 handleNotificationsClick={handleNotificationsClick}
+                onNavigateTab={setActiveTab}
                 toggleTheme={toggleTheme}
                 t={t}
               />

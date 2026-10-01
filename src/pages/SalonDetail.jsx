@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatServiceName } from '../utils/serviceTranslator';
 import { isHolidayExpired, isDateOnHoliday, getLocalDateString, formatToDDMMYYYY } from '../utils/dateUtils';
@@ -16,7 +16,8 @@ import {
   Sparkles,
   Heart,
   Megaphone,
-  Users
+  Users,
+  Lock
 } from 'lucide-react';
 import api from '../config/api';
 import HolidayAnnouncementCard from '../components/HolidayAnnouncementCard';
@@ -65,6 +66,28 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
   const [slots, setSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
+  // Sync refs so setInterval always reads the freshest values without stale closures
+  const selectedServiceRef = useRef(selectedService);
+  const bookingDateRef = useRef(bookingDate);
+  const selectedChairIdRef = useRef(selectedChairId);
+  const bookingTimeRef = useRef(bookingTime);
+
+  useEffect(() => {
+    selectedServiceRef.current = selectedService;
+  }, [selectedService]);
+
+  useEffect(() => {
+    bookingDateRef.current = bookingDate;
+  }, [bookingDate]);
+
+  useEffect(() => {
+    selectedChairIdRef.current = selectedChairId;
+  }, [selectedChairId]);
+
+  useEffect(() => {
+    bookingTimeRef.current = bookingTime;
+  }, [bookingTime]);
+
   const formatTime12Hr = (time24) => {
     if (!time24) return '';
     const [hoursStr, minutesStr] = time24.split(':');
@@ -91,8 +114,15 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
     try {
       if (!isSilent) setLoading(true);
       setError('');
-      const response = await api.get(`/api/salons/${salonId}`);
-      setSalon(response.data.data);
+      const response = await api.get(`/api/salons/${salonId}?_t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      });
+      const data = response.data?.data;
+      setSalon(data);
+      // Auto-select the first service if not selected yet so empty slots calculate immediately
+      if (data?.services?.length > 0 && !selectedServiceRef.current) {
+        setSelectedService(data.services[0]);
+      }
     } catch (err) {
       if (!isSilent) setError('Failed to load salon details.');
     } finally {
@@ -102,29 +132,39 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
 
   const fetchChairs = async () => {
     try {
-      const res = await api.get(`/api/salons/${salonId}/chairs/active`);
-      setChairs(res.data.data || []);
+      const res = await api.get(`/api/salons/${salonId}/chairs/active?_t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      });
+      setChairs(res.data?.data || []);
     } catch (err) {}
   };
 
-  const fetchSlots = async () => {
-    if (!selectedService || !bookingDate) return;
+  const fetchSlots = async (isSilent = false) => {
+    const currentService = selectedServiceRef.current;
+    const currentDate = bookingDateRef.current;
+    const currentChair = selectedChairIdRef.current;
+
+    if (!currentService || !currentDate) return;
     try {
-      setSlotsLoading(true);
-      const chairParam = selectedChairId ? `&preferredChairId=${selectedChairId}` : '';
-      const res = await api.get(`/api/salons/${salonId}/slots?date=${bookingDate}&serviceId=${selectedService.id}${chairParam}`);
-      setSlots(res.data.data);
+      if (!isSilent) setSlotsLoading(true);
+      const chairParam = currentChair ? `&preferredChairId=${currentChair}` : '';
+      const res = await api.get(`/api/salons/${salonId}/slots?date=${currentDate}&serviceId=${currentService.id}${chairParam}&_t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      });
+      const fetchedSlots = res.data?.data || [];
+      setSlots(fetchedSlots);
       
-      const availableSlots = res.data.data.filter(s => s.available);
-      if (availableSlots.length > 0) {
-        setBookingTime(availableSlots[0].time);
-      } else {
-        setBookingTime('');
-      }
+      const availableSlots = fetchedSlots.filter(s => s.available);
+      setBookingTime(prevTime => {
+        if (prevTime && availableSlots.some(s => s.time === prevTime)) {
+          return prevTime;
+        }
+        return availableSlots.length > 0 ? availableSlots[0].time : '';
+      });
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch slots:', err);
     } finally {
-      setSlotsLoading(false);
+      if (!isSilent) setSlotsLoading(false);
     }
   };
 
@@ -136,15 +176,19 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
       const interval = setInterval(() => {
         fetchSalonDetails(true);
         fetchChairs();
+        // Live auto-calculation of empty slots
+        fetchSlots(true);
       }, 3000); // 3-second live refresh
 
       return () => clearInterval(interval);
     }
-  }, [salonId, bookingDate]);
+  }, [salonId]);
 
   useEffect(() => {
-    fetchSlots();
-  }, [selectedService, bookingDate, selectedChairId]);
+    if (selectedService && bookingDate) {
+      fetchSlots(false);
+    }
+  }, [selectedService?.id, bookingDate, selectedChairId]);
 
   const handleBookSlot = async (e) => {
     e.preventDefault();
@@ -269,8 +313,21 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
         />
       )}
 
+      {/* Locked notice */}
+      {salon?.isLocked && (
+        <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-start gap-3 text-rose-300">
+          <Lock className="w-5 h-5 shrink-0 mt-0.5" />
+          <div>
+            <h4 className="font-bold text-sm">Salon Account Suspended</h4>
+            <p className="text-xs opacity-90 mt-0.5">
+              This salon is currently locked by administration. New appointments and queue tokens are not being accepted.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Closed notice */}
-      {salon?.isOpen === false && (
+      {!salon?.isLocked && salon?.isOpen === false && (
         <div className="p-4 bg-red-500/10 border border-red-500/25 rounded-2xl flex items-start gap-3 text-red-400">
           <Clock className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
@@ -506,7 +563,13 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
               {/* Time Slots Grid */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-400">Available Time Slots</label>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-semibold text-slate-400">Available Time Slots</label>
+                    <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      LIVE
+                    </span>
+                  </div>
                   {!slotsLoading && slots.length > 0 && (
                     <span className="text-[10px] font-bold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-full">
                       {slots.filter(s => s.available).length} {t('detail.emptySlots', { defaultValue: 'empty slot(s)' })}

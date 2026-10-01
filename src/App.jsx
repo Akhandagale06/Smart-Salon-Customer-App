@@ -14,6 +14,8 @@ import AppointmentDetail from './pages/AppointmentDetail';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import WalkInQueue from './pages/WalkInQueue';
+import About from './pages/About';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 const MainApp = () => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -150,6 +152,10 @@ const MainApp = () => {
         return <Notifications />;
       case 'profile':
         return <Profile />;
+      case 'about':
+        return <About onBack={() => setActiveTab('salons')} onNavigateTab={handleTabChange} />;
+      case 'privacy':
+        return <PrivacyPolicy onBack={() => setActiveTab('salons')} onNavigateTab={handleTabChange} />;
       default:
         return <Salons onSelectSalon={setSelectedSalonId} searchTerm={searchTerm} />;
     }
@@ -172,7 +178,7 @@ const MainApp = () => {
         {renderContent()}
       </main>
 
-      <Footer />
+      <Footer onSelectTab={handleTabChange} />
 
       <TelegramNoticeModal
         isOpen={isTelegramNoticeOpen}

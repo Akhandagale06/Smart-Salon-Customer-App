@@ -184,17 +184,19 @@ const Login = ({ forceStep3 }) => {
 
       <div className="my-auto w-full max-w-md mx-auto relative z-10 pt-4">
         {/* Centered Brand Header directly upper side of the box */}
-        <div className="text-center mb-6 flex justify-center">
+        <div className="text-center mb-5 flex justify-center">
           {!logoFailed ? (
-            <img 
-              src={logoSrc} 
-              alt="Smart Salon Logo" 
-              onError={handleLogoError}
-              className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-2xl hover:scale-105 transition-transform"
-            />
+            <div className="inline-block p-1.5 rounded-2xl bg-slate-900/90 border border-violet-500/30 shadow-xl shadow-violet-500/20 hover:scale-105 transition-transform">
+              <img 
+                src={logoSrc} 
+                alt="Smart Salon Logo" 
+                onError={handleLogoError}
+                className="w-16 h-16 sm:w-20 sm:h-20 object-contain rounded-xl"
+              />
+            </div>
           ) : (
-            <div className="inline-flex p-4 rounded-2xl bg-gradient-to-tr from-violet-600 via-purple-500 to-pink-500 text-white shadow-2xl shadow-violet-500/30 border border-violet-400/30 group hover:scale-105 transition-transform">
-              <Sparkles className="w-14 h-14" />
+            <div className="inline-flex p-3 rounded-2xl bg-gradient-to-tr from-violet-600 via-purple-500 to-pink-500 text-white shadow-xl shadow-violet-500/30 border border-violet-400/30 group hover:scale-105 transition-transform">
+              <Sparkles className="w-8 h-8 sm:w-10 sm:h-10" />
             </div>
           )}
         </div>
@@ -314,12 +316,9 @@ const Login = ({ forceStep3 }) => {
         </div>
 
         {/* Info */}
-        <div className="text-center space-y-1.5 mb-6">
+        <div className="text-center mb-6">
           <p className="text-xs text-violet-400 font-medium">
             ✨ Any new mobile number will automatically register as a new Customer!
-          </p>
-          <p className="text-xs text-slate-500">
-            For testing existing customer login, use <span className="text-slate-350 font-bold">9988776655</span>.
           </p>
         </div>
 

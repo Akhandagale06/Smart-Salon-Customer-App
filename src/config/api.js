@@ -21,12 +21,31 @@ const api = axios.create({
   },
 });
 
+// Helper to check if a JWT is expired
+export const isJwtExpired = (token) => {
+  if (!token) return true;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    const payload = JSON.parse(atob(parts[1]));
+    if (!payload.exp) return false;
+    return payload.exp * 1000 < Date.now();
+  } catch (e) {
+    return true;
+  }
+};
+
 // Request interceptor to add authentication token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      if (isJwtExpired(token)) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } else {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },

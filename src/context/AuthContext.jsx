@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../config/api';
+import api, { isJwtExpired } from '../config/api';
 
 const AuthContext = createContext(null);
 
@@ -13,8 +13,20 @@ export const AuthProvider = ({ children }) => {
     const savedUser = localStorage.getItem('user');
 
     if (savedToken && savedUser) {
-      setToken(savedToken);
-      setUser(JSON.parse(savedUser));
+      if (isJwtExpired(savedToken)) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setToken(null);
+        setUser(null);
+      } else {
+        try {
+          setUser(JSON.parse(savedUser));
+          setToken(savedToken);
+        } catch {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      }
     }
     setLoading(false);
   }, []);

@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Pin } from 'lucide-react';
 import api from '../config/api';
 import SalonCard from '../components/SalonCard';
-import CustomAnnouncementBanner from '../components/CustomAnnouncementBanner';
 
 const Salons = ({ onSelectSalon, searchTerm = '' }) => {
   const { t } = useTranslation();
@@ -11,6 +10,17 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
   const [loading, setLoading] = useState(true);
   const [coords, setCoords] = useState(null);
   const [error, setError] = useState('');
+
+  const coordsRef = useRef(coords);
+  const searchTermRef = useRef(searchTerm);
+
+  useEffect(() => {
+    coordsRef.current = coords;
+  }, [coords]);
+
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
 
   // Favorites / Pinned salons persisted in localStorage
   const [favorites, setFavorites] = useState(() => {
@@ -37,19 +47,23 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
     });
   };
 
-  const fetchSalons = async (latitude = null, longitude = null, query = searchTerm, isSilent = false) => {
+  const fetchSalons = async (latitude = null, longitude = null, query = searchTermRef.current, isSilent = false) => {
     try {
       if (!isSilent) setLoading(true);
       setError('');
       let url = '/api/salons';
 
       if (query) {
-        url = `/api/salons?name=${encodeURIComponent(query)}&address=${encodeURIComponent(query)}`;
+        url = `/api/salons?name=${encodeURIComponent(query)}&address=${encodeURIComponent(query)}&_t=${Date.now()}`;
       } else if (latitude && longitude) {
-        url = `/api/salons?latitude=${latitude}&longitude=${longitude}&radiusKm=50`;
+        url = `/api/salons?latitude=${latitude}&longitude=${longitude}&radiusKm=50&_t=${Date.now()}`;
+      } else {
+        url = `/api/salons?_t=${Date.now()}`;
       }
 
-      const response = await api.get(url);
+      const response = await api.get(url, {
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      });
       setSalons(response.data.data || []);
     } catch (err) {
       if (!isSilent) setError('Failed to fetch salons. Please try again.');
@@ -67,12 +81,12 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
       (position) => {
         const { latitude, longitude } = position.coords;
         setCoords({ latitude, longitude });
-        fetchSalons(latitude, longitude, searchTerm);
+        fetchSalons(latitude, longitude, searchTermRef.current);
       },
       (error) => {
         console.warn('Geolocation access denied', error);
         // Fallback to fetch without coords
-        fetchSalons(null, null, searchTerm);
+        fetchSalons(null, null, searchTermRef.current);
       }
     );
   };
@@ -82,7 +96,7 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
     getGeoLocation();
 
     const interval = setInterval(() => {
-      fetchSalons(coords?.latitude, coords?.longitude, searchTerm, true);
+      fetchSalons(coordsRef.current?.latitude, coordsRef.current?.longitude, searchTermRef.current, true);
     }, 4000); // 4-second live refresh
 
     return () => clearInterval(interval);
@@ -116,23 +130,6 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
         </div>
       )}
 
-      {/* 📢 Active Salon Custom Announcement & Banner */}
-      {(() => {
-        const announcingSalon = salons?.find(s => Boolean(s.customAnnouncement || s.customAnnouncementImage));
-        if (!announcingSalon) return null;
-        return (
-          <div 
-            onClick={() => onSelectSalon && onSelectSalon(announcingSalon.id)}
-            className="cursor-pointer transition-transform hover:scale-[1.005] active:scale-[0.995]"
-          >
-            <CustomAnnouncementBanner
-              message={announcingSalon.customAnnouncement}
-              imageUrl={announcingSalon.customAnnouncementImage}
-              salonName={announcingSalon.name}
-            />
-          </div>
-        );
-      })()}
 
       {/* Salons list */}
       {loading ? (

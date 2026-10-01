@@ -13,12 +13,12 @@ export const formatWaitTime = (minutes, t) => {
     return `0 ${minsUnit}`;
   }
 
-  if (mins > 60) {
+  if (mins >= 60) {
     const wholeHours = Math.floor(mins / 60);
     const remMins = mins % 60;
-    const hrUnit = wholeHours === 1
-      ? (t ? t('common.hr', { defaultValue: 'hr' }) : 'hr')
-      : (t ? t('common.hrs', { defaultValue: 'hrs' }) : 'hrs');
+    const singleHrUnit = t ? t('common.hr', { defaultValue: 'hr' }) : 'hr';
+    const multiHrUnit = t ? t('common.hrs', { defaultValue: 'hrs' }) : 'hrs';
+    const hrUnit = wholeHours === 1 ? singleHrUnit : multiHrUnit;
     const minsUnit = t ? t('common.mins', { defaultValue: 'mins' }) : 'mins';
 
     // If exact hour multiple (e.g. 60 min -> 1 hr, 120 min -> 2 hrs)
@@ -26,15 +26,7 @@ export const formatWaitTime = (minutes, t) => {
       return `${wholeHours} ${hrUnit}`;
     }
 
-    // If under 60 mins (e.g. 35 - 59 mins)
-    if (wholeHours === 0) {
-      const formattedHours = Number((mins / 60).toFixed(2));
-      const singleHrUnit = t ? t('common.hr', { defaultValue: 'hr' }) : 'hr';
-      return `${formattedHours} ${singleHrUnit}`;
-    }
-
-    // If over 60 mins with remaining mins (e.g. 75 mins -> 1 hr 15 mins)
-    const singleHrUnit = t ? t('common.hr', { defaultValue: 'hr' }) : 'hr';
+    // If over 60 mins with remaining mins (e.g. 104 mins -> 1 hr 44 mins)
     return `${wholeHours} ${singleHrUnit} ${remMins} ${minsUnit}`;
   }
 
