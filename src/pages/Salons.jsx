@@ -81,18 +81,21 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
       (position) => {
         const { latitude, longitude } = position.coords;
         setCoords({ latitude, longitude });
-        fetchSalons(latitude, longitude, searchTermRef.current);
+        // Silently re-sort/update by distance without showing full-page loader
+        fetchSalons(latitude, longitude, searchTermRef.current, true);
       },
       (error) => {
-        console.warn('Geolocation access denied', error);
-        // Fallback to fetch without coords
-        fetchSalons(null, null, searchTermRef.current);
-      }
+        console.warn('Geolocation access unavailable or denied', error);
+      },
+      { timeout: 5000, maximumAge: 300000, enableHighAccuracy: false }
     );
   };
 
   useEffect(() => {
-    // Initial fetch using geolocation or search term
+    // 1. Instant load: Fetch salons immediately without waiting for GPS
+    fetchSalons(null, null, searchTermRef.current, false);
+
+    // 2. Non-blocking geolocation: update coordinates in background
     getGeoLocation();
 
     const interval = setInterval(() => {

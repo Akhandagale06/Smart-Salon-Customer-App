@@ -768,3 +768,49 @@ body.theme-light,
 .theme-light ::-webkit-scrollbar-thumb:hover {
   background: #64748b !important;
 }
+
+/* ============================================================
+   EMERGENCY NOTICE (LIGHT THEME & CONTRAST OVERRIDES)
+   ============================================================ */
+.theme-light .emergency-notice-card {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.85) 0%, rgba(255, 247, 237, 0.95) 50%, rgba(254, 242, 242, 0.75) 100%) !important;
+  border-color: rgba(252, 211, 77, 0.7) !important;
+  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.08), 0 4px 6px -2px rgba(245, 158, 11, 0.04) !important;
+  color: #78350f !important;
+}
+
+.theme-light .emergency-notice-header {
+  border-color: rgba(253, 230, 138, 0.8) !important;
+}
+
+.theme-light .emergency-notice-title,
+.theme-light .emergency-notice-title span {
+  color: #78350f !important;
+}
+
+.theme-light .emergency-notice-badge {
+  background-color: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #92400e !important;
+}
+
+.theme-light .emergency-notice-sub {
+  color: #b45309 !important;
+}
+
+.theme-light .emergency-notice-box {
+  background-color: #ffffff !important;
+  border-color: #fde68a !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04) !important;
+}
+
+.theme-light .emergency-notice-message,
+.theme-light .emergency-notice-message span {
+  color: #0f172a !important;
+}
+
+.theme-light .emergency-notice-footer,
+.theme-light .emergency-notice-footer span {
+  color: #475569 !important;
+}
+

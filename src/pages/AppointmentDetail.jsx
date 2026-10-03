@@ -337,38 +337,46 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
   const fetchDetails = async () => {
     try {
       setError('');
-      // Fetch appointment details
+      // 1. Fetch appointment details
       const response = await api.get(`/api/appointments/${appointmentId}`);
-      setAppointment(response.data.data);
+      const apptData = response.data.data;
+      setAppointment(apptData);
 
-      const salonId = response.data.data.salonId;
-      const bookingDate = response.data.data.bookingDate;
+      const salonId = apptData?.salonId;
+      const bookingDate = apptData?.bookingDate;
 
-      // Fetch breaks for this salon on booking date
-      if (salonId && bookingDate) {
-        try {
-          const breaksRes = await api.get(`/api/salons/${salonId}/breaks?date=${bookingDate}`);
-          setBreaks(breaksRes.data.data || []);
-        } catch (ignored) {}
-      }
-
-      // Fetch chairs for this salon to have chair and barber names available
-      if (salonId) {
-        try {
-          const chairsRes = await api.get(`/api/salons/${salonId}/chairs/active`);
-          setChairs(chairsRes.data.data || []);
-        } catch (ignored) {}
-      }
-
-      // Fetch queue position details if booked for today and not completed/cancelled
+      // 2. Fetch breaks, chairs, and live queue status simultaneously in parallel!
       const isToday = bookingDate === getLocalDateString();
-      const activeStatus = ['BOOKED', 'CONFIRMED', 'WAITING', 'ARRIVED', 'IN_SERVICE', 'LATE'].includes(response.data.data.status);
+      const activeStatus = ['BOOKED', 'CONFIRMED', 'WAITING', 'ARRIVED', 'IN_SERVICE', 'LATE'].includes(apptData?.status);
+
+      const secondaryRequests = [];
+
+      if (salonId && bookingDate) {
+        secondaryRequests.push(
+          api.get(`/api/salons/${salonId}/breaks?date=${bookingDate}`)
+            .then((breaksRes) => setBreaks(breaksRes.data?.data || []))
+            .catch(() => {})
+        );
+      }
+
+      if (salonId) {
+        secondaryRequests.push(
+          api.get(`/api/salons/${salonId}/chairs/active`)
+            .then((chairsRes) => setChairs(chairsRes.data?.data || []))
+            .catch(() => {})
+        );
+      }
 
       if (isToday && activeStatus) {
-        try {
-          const queueRes = await api.get(`/api/queue/status/${appointmentId}`);
-          setQueueStatus(queueRes.data.data);
-        } catch (ignored) {}
+        secondaryRequests.push(
+          api.get(`/api/queue/status/${appointmentId}`)
+            .then((queueRes) => setQueueStatus(queueRes.data?.data))
+            .catch(() => {})
+        );
+      }
+
+      if (secondaryRequests.length > 0) {
+        await Promise.all(secondaryRequests);
       }
     } catch (err) {
       setError('Failed to load appointment details.');

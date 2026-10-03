@@ -20,11 +20,14 @@ import {
   Lock
 } from 'lucide-react';
 import api from '../config/api';
+import { useTheme } from '../context/ThemeContext';
 import HolidayAnnouncementCard from '../components/HolidayAnnouncementCard';
 import CustomAnnouncementBanner from '../components/CustomAnnouncementBanner';
 
 const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
-  const { t,i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const themeContext = useTheme?.();
+  const isLight = themeContext?.theme === 'light';
   const [salon, setSalon] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -170,14 +173,15 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
 
   useEffect(() => {
     if (salonId) {
-      fetchSalonDetails();
-      fetchChairs();
+      // Parallel initial fetch of salon details and active chairs
+      Promise.all([fetchSalonDetails(), fetchChairs()]);
 
       const interval = setInterval(() => {
-        fetchSalonDetails(true);
-        fetchChairs();
-        // Live auto-calculation of empty slots
-        fetchSlots(true);
+        Promise.all([
+          fetchSalonDetails(true),
+          fetchChairs(),
+          fetchSlots(true)
+        ]);
       }, 3000); // 3-second live refresh
 
       return () => clearInterval(interval);
@@ -328,7 +332,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
 
       {/* Closed notice */}
       {!salon?.isLocked && salon?.isOpen === false && (
-        <div className="p-4 bg-red-500/10 border border-red-500/25 rounded-2xl flex items-start gap-3 text-red-400">
+        <div className="p-4 bg-red-500/10 border border-red-500/25 rounded-2xl flex items-start gap-3 text-red-600 dark:text-red-400">
           <Clock className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
             <h4 className="font-bold text-sm">Salon is Closed</h4>
@@ -341,33 +345,73 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
 
       {/* Emergency closure alert box */}
       {salon?.mode === 'EMERGENCY' && (
-        <div className="relative overflow-hidden p-5 rounded-3xl bg-gradient-to-br from-amber-950/80 via-slate-900/95 to-purple-950/50 border border-amber-500/35 text-amber-200 shadow-xl shadow-amber-950/30 backdrop-blur-md space-y-3.5 animate-fade-in">
-          <div className="flex items-center justify-between gap-3 border-b border-amber-500/20 pb-3">
+        <div 
+          className={`emergency-notice-card relative overflow-hidden p-4 sm:p-5 rounded-3xl transition-all duration-300 border backdrop-blur-md space-y-3.5 animate-fade-in ${
+            isLight
+              ? 'bg-gradient-to-br from-amber-50/95 via-orange-50/70 to-amber-100/40 border-amber-200/90 text-amber-950 shadow-lg shadow-amber-500/5'
+              : 'bg-gradient-to-br from-amber-950/80 via-slate-900/95 to-purple-950/50 border-amber-500/35 text-amber-200 shadow-xl shadow-amber-950/30'
+          }`}
+        >
+          {/* Subtle Ambient Glow */}
+          <div 
+            className={`absolute -top-10 -right-10 w-40 h-40 rounded-full pointer-events-none blur-3xl opacity-30 ${
+              isLight ? 'bg-amber-400' : 'bg-amber-500'
+            }`} 
+            aria-hidden="true" 
+          />
+
+          <div className={`emergency-notice-header flex items-center justify-between gap-3 border-b pb-3 relative z-10 ${
+            isLight ? 'border-amber-200/80' : 'border-amber-500/20'
+          }`}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 shadow-inner shrink-0">
-                <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+              <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 border transition-colors ${
+                isLight
+                  ? 'bg-amber-100/90 border-amber-300 text-amber-700 shadow-sm shadow-amber-200/50'
+                  : 'bg-amber-500/20 border-amber-400/40 text-amber-300 shadow-inner'
+              }`}>
+                <Sparkles className={`w-5 h-5 ${isLight ? 'text-amber-600' : 'text-amber-300'} animate-pulse`} />
               </div>
-              <div>
-                <h4 className="font-extrabold text-sm text-amber-100 tracking-tight flex items-center gap-2">
-                  Salon Temporarily Closed
-                  <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300">
+              <div className="min-w-0">
+                <h4 className={`emergency-notice-title font-extrabold text-sm sm:text-base tracking-tight flex items-center gap-2 flex-wrap ${
+                  isLight ? 'text-slate-900' : 'text-amber-100'
+                }`}>
+                  <span>Salon Temporarily Closed</span>
+                  <span className={`emergency-notice-badge text-[9px] sm:text-[10px] font-black uppercase px-2 sm:px-2.5 py-0.5 rounded-full border tracking-wide shrink-0 ${
+                    isLight
+                      ? 'bg-amber-100/90 border-amber-300 text-amber-800 shadow-xs'
+                      : 'bg-amber-500/20 border-amber-400/30 text-amber-300'
+                  }`}>
                     Special Notice
                   </span>
                 </h4>
-                <p className="text-[11px] text-amber-300/80 font-medium">Notice from Salon Owner</p>
+                <p className={`emergency-notice-sub text-[11px] sm:text-xs font-semibold mt-0.5 ${
+                  isLight ? 'text-amber-800/80' : 'text-amber-300/80'
+                }`}>
+                  Notice from Salon Owner
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="space-y-2 pt-0.5">
-            <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-amber-500/20 shadow-inner">
-              <p className="text-xs font-bold text-slate-100 leading-relaxed flex items-start gap-2">
-                <span className="text-amber-400 text-sm shrink-0">🌺</span>
-                <span>{salon.emergencyMessage || 'The salon is temporarily closed today due to a special occasion / family function.'}</span>
+          <div className="space-y-2.5 pt-0.5 relative z-10">
+            <div className={`emergency-notice-box p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 ${
+              isLight
+                ? 'bg-white/95 border-amber-200/90 shadow-xs'
+                : 'bg-slate-950/70 border-amber-500/20 shadow-inner'
+            }`}>
+              <p className={`emergency-notice-message text-xs sm:text-sm font-semibold leading-relaxed flex items-start gap-2.5 ${
+                isLight ? 'text-slate-800' : 'text-slate-100'
+              }`}>
+                <span className="text-base shrink-0 leading-tight">🌺</span>
+                <span className="break-words">
+                  {salon.emergencyMessage || 'The salon is temporarily closed today due to a special occasion / family function.'}
+                </span>
               </p>
             </div>
-            <p className="text-[11px] text-slate-400 pt-1 flex items-center gap-1.5 font-medium">
-              <Heart className="w-3 h-3 text-pink-400 fill-current shrink-0" />
+            <p className={`emergency-notice-footer text-[11px] sm:text-xs pt-0.5 flex items-start sm:items-center gap-1.5 font-medium leading-normal ${
+              isLight ? 'text-slate-600' : 'text-slate-400'
+            }`}>
+              <Heart className={`w-3.5 h-3.5 mt-0.5 sm:mt-0 ${isLight ? 'text-rose-500' : 'text-pink-400'} fill-current shrink-0 animate-pulse`} />
               <span>Online bookings & live queue slots are temporarily paused. Thank you for your warm understanding!</span>
             </p>
           </div>
@@ -376,7 +420,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
 
       {/* Busy mode notice */}
       {salon?.mode === 'BUSY' && (
-        <div className="p-4 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-start gap-3 text-amber-400">
+        <div className="p-4 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-start gap-3 text-amber-600 dark:text-amber-400">
           <Zap className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
             <h4 className="font-bold text-sm">Busy Mode Active</h4>
