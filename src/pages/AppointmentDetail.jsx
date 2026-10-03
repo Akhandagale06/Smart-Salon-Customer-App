@@ -254,12 +254,11 @@ const AppointmentDetail = ({ appointmentId, onBack, onCancelSuccess }) => {
                   : t('detail.yourTurnComesIn', { min: formattedWait, waitTime: formattedWait, time: formattedSlot })
                 }
               </h3>
-              <p className="text-xs text-white font-semibold max-w-xs mx-auto leading-relaxed">
-                {isSoon
-                  ? t('detail.getReadySub', { min: formattedWait, waitTime: formattedWait, time: formattedSlot })
-                  : t('detail.noOneAheadSub', { time: formattedSlot })
-                }
-              </p>
+              {!isSoon && (
+                <p className="text-xs text-white font-semibold max-w-xs mx-auto leading-relaxed">
+                  {t('detail.noOneAheadSub', { time: formattedSlot })}
+                </p>
+              )}
             </div>
 
             {/* Footer Alert notice */}
