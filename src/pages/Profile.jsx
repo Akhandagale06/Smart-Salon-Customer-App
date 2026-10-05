@@ -21,6 +21,7 @@ import {
   Star
 } from 'lucide-react';
 import api from '../config/api';
+import { getCurrentLocationWithAddress, reverseGeocode } from '../utils/locationUtils';
 
 const Profile = () => {
   const { t } = useTranslation();
@@ -32,6 +33,8 @@ const Profile = () => {
   const [language, setLanguage] = useState(user?.language || 'ENGLISH');
   const [latitude, setLatitude] = useState(user?.latitude || '');
   const [longitude, setLongitude] = useState(user?.longitude || '');
+  const [locating, setLocating] = useState(false);
+  const [resolvedAddress, setResolvedAddress] = useState('');
 
   // My Salons & Tenant Notification State
   const [mySalons, setMySalons] = useState([]);
@@ -168,22 +171,30 @@ const Profile = () => {
     }
   };
 
-  const getGeoLocation = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLatitude(position.coords.latitude);
-        setLongitude(position.coords.longitude);
-      },
-      (error) => {
-        alert('Could not resolve location coordinates');
+  const getGeoLocation = async () => {
+    setLocating(true);
+    try {
+      const loc = await getCurrentLocationWithAddress();
+      setLatitude(loc.latitude);
+      setLongitude(loc.longitude);
+      if (loc.address) {
+        setResolvedAddress(loc.address);
       }
-    );
+    } catch (error) {
+      console.warn('Geolocation error:', error);
+      alert(error.message || 'Could not resolve location coordinates');
+    } finally {
+      setLocating(false);
+    }
   };
+
+  useEffect(() => {
+    if (user?.latitude && user?.longitude && !resolvedAddress) {
+      reverseGeocode(user.latitude, user.longitude).then((addr) => {
+        if (addr) setResolvedAddress(addr);
+      });
+    }
+  }, [user?.latitude, user?.longitude]);
 
   return (
     <div className="space-y-6 pb-24 animate-fade-in max-w-md mx-auto">
@@ -326,14 +337,32 @@ const Profile = () => {
             </div>
           </div>
 
+          {/* Resolved Address Pill */}
+          {resolvedAddress && (
+            <div className="p-2.5 rounded-xl bg-violet-950/30 border border-violet-800/40 text-[11px] text-violet-300 flex items-start gap-2">
+              <MapPin className="w-3.5 h-3.5 text-violet-400 mt-0.5 shrink-0" />
+              <span>{resolvedAddress}</span>
+            </div>
+          )}
+
           {/* GPS Sync */}
           <button
             type="button"
             onClick={getGeoLocation}
-            className="w-full py-2.5 rounded-xl border border-slate-850 hover:bg-slate-800/40 text-slate-300 text-xs font-semibold flex items-center justify-center gap-1.5"
+            disabled={locating}
+            className="w-full py-2.5 rounded-xl border border-slate-850 hover:bg-slate-800/40 text-slate-300 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
-            <MapPin className="w-4 h-4 text-violet-400" />
-            Sync Location Coordinates
+            {locating ? (
+              <>
+                <Loader className="w-4 h-4 animate-spin text-violet-400" />
+                <span>Detecting Location...</span>
+              </>
+            ) : (
+              <>
+                <MapPin className="w-4 h-4 text-violet-400" />
+                <span>Sync Location & Address</span>
+              </>
+            )}
           </button>
 
           {/* Save button */}

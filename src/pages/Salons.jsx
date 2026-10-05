@@ -4,6 +4,7 @@ import { Search, Pin, Compass, X } from 'lucide-react';
 import api from '../config/api';
 import SalonCard from '../components/SalonCard';
 import { useTheme } from '../context/ThemeContext';
+import { getCurrentLocationWithAddress } from '../utils/locationUtils';
 
 const Salons = ({ onSelectSalon, searchTerm = '' }) => {
   const { t } = useTranslation();
@@ -133,32 +134,21 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
     }
   };
 
-  const getGeoLocation = (isInitial = false) => {
-    if (!navigator.geolocation) {
+  const getGeoLocation = async (isInitial = false) => {
+    try {
+      const loc = await getCurrentLocationWithAddress();
+      const newCoords = { latitude: loc.latitude, longitude: loc.longitude };
+      setCoords(newCoords);
+      try {
+        localStorage.setItem('user_coords', JSON.stringify(newCoords));
+      } catch (e) {}
+      fetchSalons(loc.latitude, loc.longitude, searchTermRef.current, !isInitial, selectedRadiusRef.current);
+    } catch (error) {
+      console.warn('Geolocation access unavailable or denied', error);
       if (isInitial && !coordsRef.current) {
         fetchSalons(null, null, searchTermRef.current, false, selectedRadiusRef.current);
       }
-      return;
     }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const newCoords = { latitude, longitude };
-        setCoords(newCoords);
-        try {
-          localStorage.setItem('user_coords', JSON.stringify(newCoords));
-        } catch (e) {}
-        fetchSalons(latitude, longitude, searchTermRef.current, !isInitial, selectedRadiusRef.current);
-      },
-      (error) => {
-        console.warn('Geolocation access unavailable or denied', error);
-        if (isInitial && !coordsRef.current) {
-          fetchSalons(null, null, searchTermRef.current, false, selectedRadiusRef.current);
-        }
-      },
-      { timeout: 7000, maximumAge: 60000, enableHighAccuracy: true }
-    );
   };
 
   useEffect(() => {
