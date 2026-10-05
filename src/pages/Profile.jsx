@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -14,7 +14,11 @@ import {
   KeyRound,
   ArrowRight,
   RefreshCw,
-  X
+  X,
+  Store,
+  Bell,
+  BellOff,
+  Star
 } from 'lucide-react';
 import api from '../config/api';
 
@@ -28,6 +32,46 @@ const Profile = () => {
   const [language, setLanguage] = useState(user?.language || 'ENGLISH');
   const [latitude, setLatitude] = useState(user?.latitude || '');
   const [longitude, setLongitude] = useState(user?.longitude || '');
+
+  // My Salons & Tenant Notification State
+  const [mySalons, setMySalons] = useState([]);
+  const [loadingMySalons, setLoadingMySalons] = useState(false);
+
+  const fetchMySalons = async () => {
+    try {
+      setLoadingMySalons(true);
+      const res = await api.get('/api/customer/my-salons');
+      setMySalons(res.data.data || []);
+    } catch (err) {
+      console.warn('Could not load My Salons:', err);
+    } finally {
+      setLoadingMySalons(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMySalons();
+  }, []);
+
+  const handleToggleSalonNotifications = async (salonId, currentEnabled) => {
+    const nextVal = !currentEnabled;
+    // Optimistic UI update
+    setMySalons((prev) =>
+      prev.map((item) =>
+        item.salonId === salonId ? { ...item, notificationsEnabled: nextVal } : item
+      )
+    );
+    try {
+      await api.put(`/api/customer/my-salons/${salonId}/notifications?enabled=${nextVal}`);
+    } catch (err) {
+      // Revert on error
+      setMySalons((prev) =>
+        prev.map((item) =>
+          item.salonId === salonId ? { ...item, notificationsEnabled: currentEnabled } : item
+        )
+      );
+    }
+  };
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -303,6 +347,93 @@ const Profile = () => {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* My Salons & Scoped Notifications Section */}
+      <div className="glass-card rounded-3xl p-5 sm:p-6 border border-slate-900/60 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30 flex items-center justify-center shrink-0">
+              <Store className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                <span>My Salons</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 font-extrabold">
+                  {mySalons.length}
+                </span>
+              </h3>
+              <p className="text-[11px] text-slate-400">Control Telegram & in-app alerts per salon</p>
+            </div>
+          </div>
+        </div>
+
+        {loadingMySalons ? (
+          <div className="flex items-center justify-center py-6 text-slate-500 text-xs">
+            <Loader className="w-4 h-4 animate-spin mr-2 text-violet-400" />
+            <span>Loading connected salons...</span>
+          </div>
+        ) : mySalons.length > 0 ? (
+          <div className="space-y-2.5 pt-1">
+            {mySalons.map((item) => (
+              <div
+                key={item.salonId}
+                className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-950/60 border border-slate-850 hover:border-slate-800 transition-colors"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h4 className="text-xs font-bold text-slate-200 truncate">{item.salonName}</h4>
+                    {item.isFavorite && (
+                      <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-0.5">
+                        <Star className="w-2.5 h-2.5 fill-amber-300" />
+                        Favorite
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                    {item.address || 'Registered Salon'}
+                    {item.lastVisitedAt && (
+                      <span className="text-slate-500 ml-1.5 font-medium">
+                        • Last visit: {new Date(item.lastVisitedAt).toLocaleDateString()}
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                {/* Notifications Toggle Switch */}
+                <button
+                  type="button"
+                  onClick={() => handleToggleSalonNotifications(item.salonId, item.notificationsEnabled)}
+                  className={`py-1.5 px-3 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 border ${
+                    item.notificationsEnabled
+                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 shadow-sm shadow-emerald-500/10'
+                      : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-400'
+                  }`}
+                  title={item.notificationsEnabled ? 'Click to mute alerts for this salon' : 'Click to enable alerts'}
+                >
+                  {item.notificationsEnabled ? (
+                    <>
+                      <Bell className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Alerts: ON</span>
+                    </>
+                  ) : (
+                    <>
+                      <BellOff className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Muted</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-4 rounded-2xl bg-slate-950/40 border border-slate-850/60 text-center space-y-1">
+            <p className="text-xs font-semibold text-slate-300">No connected salons yet</p>
+            <p className="text-[11px] text-slate-500">
+              Salons you book with, queue at, or pin as favorites will appear here so you can control notices like holiday alerts!
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Logout button */}
