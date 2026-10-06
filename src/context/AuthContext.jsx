@@ -4,32 +4,68 @@ import api, { isJwtExpired } from '../config/api';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(() => {
+    try {
+      const savedToken = localStorage.getItem('token');
+      if (savedToken && !isJwtExpired(savedToken)) {
+        return savedToken;
+      }
+    } catch (e) {}
+    return null;
+  });
+
+  const [user, setUser] = useState(() => {
+    try {
+      const savedToken = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+      if (savedToken && savedUser && !isJwtExpired(savedToken)) {
+        return JSON.parse(savedUser);
+      }
+    } catch (e) {}
+    return null;
+  });
+
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
 
-    if (savedToken && savedUser) {
+    if (savedToken) {
       if (isJwtExpired(savedToken)) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setToken(null);
         setUser(null);
-      } else {
-        try {
-          setUser(JSON.parse(savedUser));
-          setToken(savedToken);
-        } catch {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-        }
+        return;
       }
+
+      // Sync latest customer profile details (including saved coords) from backend
+      api.get('/api/customer/profile')
+        .then((res) => {
+          if (res.data?.data) {
+            const profile = res.data.data;
+            setUser((prev) => {
+              const updated = { ...prev, ...profile };
+              try {
+                localStorage.setItem('user', JSON.stringify(updated));
+                if (profile.latitude && profile.longitude) {
+                  localStorage.setItem('user_coords', JSON.stringify({
+                    latitude: profile.latitude,
+                    longitude: profile.longitude,
+                  }));
+                }
+              } catch (e) {}
+              return updated;
+            });
+          }
+        })
+        .catch((err) => {
+          // If 401 or network error, keep current local user state
+          console.warn('Could not sync user profile from server:', err);
+        });
     }
-    setLoading(false);
-  }, []);
+  }, [token]);
 
   const sendOtp = async (mobileNumber) => {
     try {

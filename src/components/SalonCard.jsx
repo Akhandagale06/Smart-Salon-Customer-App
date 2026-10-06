@@ -89,13 +89,13 @@ const SalonCard = ({ salon, onClick, isFavorite = false, onToggleFavorite }) => 
           </p>
         </div>
 
-        {/* Address and Distance info row */}
+        {/* Address and Distance info row with City / Town Badge */}
         <div className={`flex items-center gap-2 text-xs min-w-0 pt-0.5 ${
           isLight ? 'text-slate-600' : 'text-slate-400'
         }`}>
-          <p className="truncate flex items-center gap-1 min-w-0 flex-1">
-            <MapPin className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-slate-400' : 'text-slate-500'}`} />
-            <span className="truncate">{salon.address}</span>
+          <p className="truncate flex items-center gap-1.5 min-w-0 flex-1">
+            <MapPin className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-violet-600' : 'text-violet-400'}`} />
+            <span className="truncate font-medium">{salon.city || salon.address}</span>
           </p>
           {salon.distance != null && (
             <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md border shrink-0 font-mono ${

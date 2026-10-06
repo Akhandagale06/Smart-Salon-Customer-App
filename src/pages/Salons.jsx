@@ -4,19 +4,24 @@ import { Search, Pin, Compass, X } from 'lucide-react';
 import api from '../config/api';
 import SalonCard from '../components/SalonCard';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { getCurrentLocationWithAddress } from '../utils/locationUtils';
 
 const Salons = ({ onSelectSalon, searchTerm = '' }) => {
   const { t } = useTranslation();
   const { theme } = useTheme();
+  const { user } = useAuth();
   const isLight = theme === 'light';
 
   const [salons, setSalons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Cached GPS coordinates persisted in localStorage for instant nearby loading
+  // Coordinates: Prioritize customer's saved profile location, then cached localStorage
   const [coords, setCoords] = useState(() => {
+    if (user?.latitude && user?.longitude) {
+      return { latitude: user.latitude, longitude: user.longitude };
+    }
     try {
       const saved = localStorage.getItem('user_coords');
       return saved ? JSON.parse(saved) : null;
@@ -24,6 +29,13 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
       return null;
     }
   });
+
+  // Keep coords synced if user profile loads or is updated
+  useEffect(() => {
+    if (user?.latitude && user?.longitude) {
+      setCoords({ latitude: user.latitude, longitude: user.longitude });
+    }
+  }, [user?.latitude, user?.longitude]);
 
   // Search Radius filter (2km, 5km [default], 10km, 25km, 'ALL') persisted in localStorage
   const [selectedRadius, setSelectedRadius] = useState(() => {
@@ -153,20 +165,38 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
 
   useEffect(() => {
     if (coords) {
-      // 1. Instant load from cached GPS: strictly fetch nearby salons for selected radius
+      // 1. Instant load from customer's saved/cached location: strictly fetch nearby salons for selected radius
       fetchSalons(coords.latitude, coords.longitude, searchTermRef.current, false, selectedRadius);
-      // 2. Silently update GPS in background
-      getGeoLocation(false);
+      // Saved location exists: DO NOT trigger device GPS on refresh!
     } else {
-      // 1. Initial request to detect GPS for nearby salons
+      // 1. Only if customer has NO saved or cached coordinates at all, detect initial GPS
       getGeoLocation(true);
+    }
+
+    // Detect GPS location if customer grants permission for the first time
+    let permissionStatus = null;
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'geolocation' }).then((status) => {
+        permissionStatus = status;
+        status.onchange = () => {
+          // Only auto-detect if coordinates are completely missing
+          if (status.state === 'granted' && !coordsRef.current && !user?.latitude) {
+            getGeoLocation(false);
+          }
+        };
+      }).catch((e) => console.warn('Geolocation permission query error:', e));
     }
 
     const interval = setInterval(() => {
       fetchSalons(coordsRef.current?.latitude, coordsRef.current?.longitude, searchTermRef.current, true, selectedRadiusRef.current);
     }, 5000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (permissionStatus) {
+        permissionStatus.onchange = null;
+      }
+    };
   }, []);
 
   useEffect(() => {

@@ -263,7 +263,14 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
               </div>
             )}
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white">{salon?.name}</h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-xl sm:text-2xl font-bold text-white">{salon?.name}</h2>
+                {salon?.city && (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 uppercase tracking-wide">
+                    📍 {salon.city}
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-slate-400 font-medium mt-0.5">By {salon?.ownerName}</p>
               {salon?.description && (
                 <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 max-w-md">{salon.description}</p>
@@ -287,8 +294,8 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
         {/* Address and working hours info */}
         <div className="space-y-2 text-xs text-slate-400 font-medium pt-2 border-t border-slate-900">
           <p className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-slate-500" />
-            {salon?.address}
+            <MapPin className="w-4 h-4 text-slate-500 shrink-0" />
+            <span>{salon?.city || salon?.address}</span>
           </p>
           <p className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-slate-500" />

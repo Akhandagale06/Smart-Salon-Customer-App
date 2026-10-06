@@ -139,67 +139,71 @@ export async function getCurrentLocationWithAddress(maxAccuracyMeters = MAX_ACCE
     });
 
   let coords = null;
+  let bestCoords = null;
   let lastError = null;
 
   // 1. Try standard / network / recent cached location first
   try {
     const position = await getPosition({
       enableHighAccuracy: false,
-      timeout: 15000,
+      timeout: 10000,
       maximumAge: 300000
     });
 
     const accuracy = position.coords.accuracy;
-    // Only accept if location accuracy is within acceptable threshold
+    bestCoords = {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+      accuracy: typeof accuracy === 'number' ? Math.round(accuracy) : null
+    };
+
+    // If within preferred precision, accept immediately
     if (typeof accuracy === 'number' && accuracy <= maxAccuracyMeters) {
-      coords = {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: Math.round(accuracy)
-      };
+      coords = bestCoords;
     } else {
       console.warn(
-        `Standard location accuracy is too coarse (±${Math.round(accuracy)}m > ${maxAccuracyMeters}m). Escalating to high-accuracy GPS...`
+        `Standard location accuracy is coarse (±${Math.round(accuracy)}m). Checking for higher-accuracy GPS...`
       );
     }
   } catch (error) {
     lastError = error;
-    console.warn('Standard location failed, trying high-accuracy GPS...', error);
+    console.warn('Standard location attempt failed, checking high-accuracy GPS...', error);
   }
 
-  // 2. Try high-accuracy GPS with generous 30s timeout
+  // 2. Try high-accuracy GPS if precise coordinates not yet acquired
   if (!coords) {
     try {
       const position = await getPosition({
         enableHighAccuracy: true,
-        timeout: 30000,
+        timeout: 15000,
         maximumAge: 0
       });
 
       const accuracy = position.coords.accuracy;
-      if (typeof accuracy === 'number' && accuracy <= maxAccuracyMeters) {
-        coords = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: Math.round(accuracy)
-        };
-      } else {
-        const errorMsg = `Detected location is too imprecise (±${Math.round(accuracy)}m accuracy). For accurate salon radius searches, please move outdoors or near a window for better GPS reception, or enter your address manually.`;
-        console.warn(errorMsg);
-        lastError = new Error(errorMsg);
+      const highAccCoords = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: typeof accuracy === 'number' ? Math.round(accuracy) : null
+      };
+
+      if (!bestCoords || (typeof accuracy === 'number' && (!bestCoords.accuracy || accuracy <= bestCoords.accuracy))) {
+        bestCoords = highAccCoords;
       }
+
+      coords = bestCoords;
     } catch (error) {
       lastError = error;
-      console.warn('High accuracy GPS location failed:', error);
+      console.warn('High accuracy GPS attempt failed or timed out:', error);
     }
   }
 
-  // If real device location could not be determined or was too imprecise, show a clear, accurate error.
-  if (!coords) {
-    if (lastError?.message && lastError.message.includes('imprecise')) {
-      throw lastError;
-    }
+  // 3. Fallback: Always accept best available coordinates rather than failing
+  if (!coords && bestCoords) {
+    coords = bestCoords;
+  }
 
+  // If no position could be determined at all (permission denied, disabled, or complete timeout)
+  if (!coords) {
     let message = 'Unable to determine your current location.';
 
     if (lastError) {
@@ -208,7 +212,7 @@ export async function getCurrentLocationWithAddress(maxAccuracyMeters = MAX_ACCE
           message = 'Location permission was denied. Please allow location access for this site in your browser / phone settings.';
           break;
         case 2: // POSITION_UNAVAILABLE
-          message = 'Your device could not determine your location. Please turn on Location/GPS, verify Google Maps can find you, and try again.';
+          message = 'Your device could not determine your location. Please turn on Location/GPS and try again.';
           break;
         case 3: // TIMEOUT
           message = 'Location request timed out. Please ensure GPS/Location is enabled and try again.';
