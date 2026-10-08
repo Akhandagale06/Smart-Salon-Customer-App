@@ -410,6 +410,13 @@
     "latitude": "अक्षांश (Latitude)",
     "longitude": "रेखांश (Longitude)",
     "gpsAutoDetected": "GPS आपोआप ओळखले",
-    "permissionDenied": "परवानगी नाकारली"
+    "permissionDenied": "परवानगी नाकारली",
+    "highlightLocationTitle": "येथे आपले सलून लोकेशन सेट करा!",
+    "highlightLocationDesc": "खालील बटणावर टॅप करा जेणेकरून आम्ही जवळचे सलून शोधू शकू आणि प्रवासाचे अंतर मोजू शकू.",
+    "deleteAccount": "खाते हटवा",
+    "deleteAccountConfirmTitle": "तुम्हाला तुमचे खाते कायमचे हटवायचे आहे का?",
+    "deleteAccountConfirmDesc": "ही क्रिया कायमस्वरूपी आहे आणि पूर्ववत केली जाऊ शकत नाही. तुमचा प्रोफाईल डेटा, अपॉइंटमेंट्स, सूचना आणि जतन केलेले सलून डेटाबेसमधून कायमचे काढून टाकले जातील.",
+    "confirmDeleteBtn": "होय, माझे खाते हटवा",
+    "deletingAccount": "खाते हटवले जात आहे..."
   }
 }

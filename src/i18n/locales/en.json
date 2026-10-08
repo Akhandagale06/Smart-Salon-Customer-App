@@ -380,6 +380,13 @@
     "latitude": "Latitude",
     "longitude": "Longitude",
     "gpsAutoDetected": "GPS Auto-Detected",
-    "permissionDenied": "Permission Denied"
+    "permissionDenied": "Permission Denied",
+    "highlightLocationTitle": "Set Your Salon Location Here!",
+    "highlightLocationDesc": "Tap the button below so we can find nearby salons and calculate travel distance.",
+    "deleteAccount": "Delete Account",
+    "deleteAccountConfirmTitle": "Delete Account Permanently?",
+    "deleteAccountConfirmDesc": "Are you sure you want to permanently delete your account? This action cannot be undone. All your profile data, appointments, notifications, and saved salons will be permanently removed from the database.",
+    "confirmDeleteBtn": "Yes, Delete My Account",
+    "deletingAccount": "Deleting Account..."
   }
 }

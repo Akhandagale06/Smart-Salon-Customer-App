@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Send, CheckCircle2, Download, Bot, ShieldCheck, AlertCircle, X, ExternalLink, Sparkles } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const TelegramNoticeModal = ({ isOpen, onClose, userId }) => {
   const { t } = useTranslation();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
   const [isChecked, setIsChecked] = useState(false);
 
   if (!isOpen) return null;
@@ -23,34 +26,54 @@ const TelegramNoticeModal = ({ isOpen, onClose, userId }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+    <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md animate-fade-in ${
+      isLight ? 'bg-slate-900/60' : 'bg-slate-950/85'
+    }`}>
       {/* Modal Container */}
-      <div className="relative w-full max-w-xl glass-modal rounded-3xl overflow-hidden shadow-2xl border border-sky-500/30 my-auto max-h-[90vh] flex flex-col">
+      <div className={`relative w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl my-auto max-h-[90vh] flex flex-col border transition-all ${
+        isLight
+          ? 'bg-white border-sky-300 text-slate-900 shadow-sky-500/10'
+          : 'glass-modal border-sky-500/30 text-white'
+      }`}>
         
         {/* Glowing Decorative Background Gradients */}
         <div className="absolute -top-24 -right-24 w-56 h-56 bg-sky-500/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
         <div className="absolute -bottom-24 -left-24 w-56 h-56 bg-violet-500/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-700/60 relative z-10 shrink-0 bg-slate-900/80">
+        <div className={`flex items-center justify-between p-5 border-b relative z-10 shrink-0 ${
+          isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/80 border-slate-700/60'
+        }`}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/25 animate-bounce">
               <Send className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+              <h3 className={`text-base sm:text-lg font-black tracking-tight flex items-center gap-2 ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>
                 {t('telegramModal.noticeTitle')}
-                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 uppercase">
+                <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase border ${
+                  isLight
+                    ? 'bg-sky-100 text-sky-700 border-sky-300'
+                    : 'bg-sky-500/20 text-sky-300 border-sky-400/30'
+                }`}>
                   {t('telegramModal.requiredBadge')}
                 </span>
               </h3>
-              <p className="text-xs text-sky-400 font-semibold">{t('telegramModal.setupGuide')}</p>
+              <p className={`text-xs font-semibold ${isLight ? 'text-sky-600' : 'text-sky-400'}`}>
+                {t('telegramModal.setupGuide')}
+              </p>
             </div>
           </div>
 
           <button
             onClick={handleDismissOnly}
-            className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className={`p-2 rounded-xl transition-colors cursor-pointer ${
+              isLight
+                ? 'bg-slate-200/70 hover:bg-slate-300 text-slate-600 hover:text-slate-900'
+                : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white'
+            }`}
             title="Close modal"
           >
             <X className="w-5 h-5" />
@@ -152,10 +175,16 @@ const TelegramNoticeModal = ({ isOpen, onClose, userId }) => {
               <p className="telegram-step-desc text-xs">
                 {t('telegramModal.step5Desc')}
               </p>
-              <div className="p-3 rounded-xl bg-slate-900 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-semibold">
+              <div className={`p-3 rounded-xl border text-xs font-mono font-semibold ${
+                isLight
+                  ? 'bg-emerald-50/80 border-emerald-300 text-emerald-800'
+                  : 'bg-slate-900 border-emerald-500/40 text-emerald-300'
+              }`}>
                 "{t('telegramModal.step5Sample')}"
               </div>
-              <p className="text-[11px] text-amber-400 font-bold flex items-center gap-1 pt-1">
+              <p className={`text-[11px] font-bold flex items-center gap-1 pt-1 ${
+                isLight ? 'text-amber-600' : 'text-amber-400'
+              }`}>
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 {t('telegramModal.step5Warning')}
               </p>
@@ -166,7 +195,9 @@ const TelegramNoticeModal = ({ isOpen, onClose, userId }) => {
         </div>
 
         {/* Modal Footer - Checkbox & OK Button */}
-        <div className="p-5 border-t border-slate-700/60 bg-slate-900/90 relative z-10 shrink-0 space-y-3">
+        <div className={`p-5 border-t relative z-10 shrink-0 space-y-3 ${
+          isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/90 border-slate-700/60'
+        }`}>
           
           {/* Checkbox */}
           <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -174,9 +205,13 @@ const TelegramNoticeModal = ({ isOpen, onClose, userId }) => {
               type="checkbox"
               checked={isChecked}
               onChange={(e) => setIsChecked(e.target.checked)}
-              className="w-4.5 h-4.5 rounded border-slate-600 text-sky-500 focus:ring-sky-500 focus:ring-offset-slate-900 bg-slate-950 cursor-pointer"
+              className={`w-4.5 h-4.5 rounded text-sky-500 focus:ring-sky-500 cursor-pointer ${
+                isLight ? 'border-slate-300 bg-white' : 'border-slate-600 bg-slate-950 focus:ring-offset-slate-900'
+              }`}
             />
-            <span className="text-xs font-bold text-slate-200">
+            <span className={`text-xs font-bold ${
+              isLight ? 'text-slate-800' : 'text-slate-200'
+            }`}>
               {t('telegramModal.checkboxLabel')}
             </span>
           </label>
@@ -188,7 +223,9 @@ const TelegramNoticeModal = ({ isOpen, onClose, userId }) => {
             className={`w-full py-3 rounded-xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all ${
               isChecked
                 ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-600/25 active:scale-98 cursor-pointer'
-                : 'bg-slate-800 text-slate-500 border border-slate-750 cursor-not-allowed'
+                : isLight
+                  ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed'
+                  : 'bg-slate-800 text-slate-500 border border-slate-750 cursor-not-allowed'
             }`}
           >
             <CheckCircle2 className="w-4.5 h-4.5 text-white" />

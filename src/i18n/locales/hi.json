@@ -399,6 +399,13 @@
     "latitude": "अक्षांश (Latitude)",
     "longitude": "देशांतर (Longitude)",
     "gpsAutoDetected": "GPS स्वतः पहचाना गया",
-    "permissionDenied": "अनुमति अस्वीकृत"
+    "permissionDenied": "अनुमति अस्वीकृत",
+    "highlightLocationTitle": "यहाँ अपना सैलून लोकेशन सेट करें!",
+    "highlightLocationDesc": "नीचे दिए गए बटन पर टैप करें ताकि हम नजदीकी सैलून खोज सकें और यात्रा दूरी की गणना कर सकें।",
+    "deleteAccount": "खाता हटाएं",
+    "deleteAccountConfirmTitle": "क्या आप वाकई अपना खाता स्थायी रूप से हटाना चाहते हैं?",
+    "deleteAccountConfirmDesc": "यह कार्रवाई स्थायी है और इसे वापस नहीं किया जा सकता। आपका प्रोफाइल डेटा, अपॉइंटमेंट, सूचनाएं और सहेजे गए सैलून डेटाबेस से हमेशा के लिए हटा दिए जाएंगे।",
+    "confirmDeleteBtn": "हाँ, मेरा खाता हटाएं",
+    "deletingAccount": "खाता हटाया जा रहा है..."
   }
 }

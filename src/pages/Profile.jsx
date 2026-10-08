@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -23,12 +23,14 @@ import {
   ChevronDown,
   Sparkles,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import api from '../config/api';
 import { getCurrentLocationWithAddress, reverseGeocode } from '../utils/locationUtils';
 
-const Profile = () => {
+const Profile = ({ highlightLocation = false, onLocationDetected }) => {
   const { t } = useTranslation();
   const { user, logout, updateProfileInContext } = useAuth();
   const { theme } = useTheme();
@@ -45,6 +47,39 @@ const Profile = () => {
   const [gpsAutoDetected, setGpsAutoDetected] = useState(false);
   const [permissionState, setPermissionState] = useState('prompt'); // 'prompt' | 'granted' | 'denied'
 
+  // Delete Account Confirmation Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    setDeleteError('');
+    try {
+      await api.delete('/api/customer/profile');
+      logout();
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Failed to delete account:', err);
+      setDeleteError(err.response?.data?.message || 'Failed to delete account. Please try again.');
+      setDeletingAccount(false);
+    }
+  };
+
+  // Location Highlight Banner & Animated Pointing Finger State
+  const [isLocationHighlighted, setIsLocationHighlighted] = useState(highlightLocation);
+  const locationBtnRef = useRef(null);
+
+  useEffect(() => {
+    if (highlightLocation) {
+      setIsLocationHighlighted(true);
+      const timer = setTimeout(() => {
+        locationBtnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightLocation]);
+
   // Keep state synced if user context updates
   useEffect(() => {
     if (user) {
@@ -59,6 +94,8 @@ const Profile = () => {
 
   // GPS Location Detection Handler (Triggered on click, or on initial grant if no saved location)
   const getGeoLocation = async (isAuto = false) => {
+    setIsLocationHighlighted(false);
+    if (onLocationDetected) onLocationDetected();
     setLocating(true);
     try {
       const loc = await getCurrentLocationWithAddress();
@@ -547,34 +584,54 @@ const Profile = () => {
             </div>
           )}
 
-          {/* GPS Sync Location Button */}
-          <button
-            type="button"
-            onClick={() => getGeoLocation(false)}
-            disabled={locating}
-            className={`w-full py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99] disabled:opacity-50 ${
-              isLight
-                ? 'border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700'
-                : 'border-slate-800 bg-slate-900/50 hover:bg-slate-800/60 text-slate-300'
-            }`}
-          >
-            {locating ? (
-              <>
-                <Loader className="w-4 h-4 animate-spin text-violet-500" />
-                <span>{t('profilePage.detectingGps', { defaultValue: 'Detecting GPS Location...' })}</span>
-              </>
-            ) : gpsAutoDetected || permissionState === 'granted' ? (
-              <>
-                <RefreshCw className="w-4 h-4 text-emerald-500" />
-                <span>{t('profilePage.refreshGps', { defaultValue: 'Refresh GPS Coordinates' })}</span>
-              </>
-            ) : (
-              <>
-                <MapPin className="w-4 h-4 text-violet-500" />
-                <span>{t('profilePage.syncGps', { defaultValue: 'Sync Location & Address' })}</span>
-              </>
+          {/* GPS Sync Location Button with Finger Highlight */}
+          <div ref={locationBtnRef} className="relative">
+            {isLocationHighlighted && (
+              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 opacity-80 blur-sm animate-pulse pointer-events-none" />
             )}
-          </button>
+
+            <button
+              type="button"
+              onClick={() => getGeoLocation(false)}
+              disabled={locating}
+              className={`w-full py-3 sm:py-3.5 rounded-xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99] disabled:opacity-50 relative z-10 ${
+                isLocationHighlighted
+                  ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 text-white border-amber-300 shadow-2xl shadow-orange-500/40 ring-4 ring-orange-400/50'
+                  : isLight
+                    ? 'border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                    : 'border-slate-800 bg-slate-900/50 hover:bg-slate-800/60 text-slate-300'
+              }`}
+            >
+              {isLocationHighlighted && (
+                <span className="text-xl sm:text-2xl animate-finger-tap-right select-none inline-block">
+                  👉
+                </span>
+              )}
+
+              {locating ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin text-white" />
+                  <span>{t('profilePage.detectingGps', { defaultValue: 'Detecting GPS Location...' })}</span>
+                </>
+              ) : gpsAutoDetected || permissionState === 'granted' ? (
+                <>
+                  <RefreshCw className={`w-4 h-4 ${isLocationHighlighted ? 'text-white' : 'text-emerald-500'}`} />
+                  <span>{t('profilePage.refreshGps', { defaultValue: 'Refresh GPS Coordinates' })}</span>
+                </>
+              ) : (
+                <>
+                  <MapPin className={`w-4 h-4 ${isLocationHighlighted ? 'text-white' : 'text-violet-500'}`} />
+                  <span>{t('profilePage.syncGps', { defaultValue: 'Sync Location & Address' })}</span>
+                </>
+              )}
+
+              {isLocationHighlighted && (
+                <span className="text-xl sm:text-2xl animate-finger-tap-down select-none inline-block transform -scale-x-100">
+                  👉
+                </span>
+              )}
+            </button>
+          </div>
 
           {/* Save Profile Button */}
           <div className="pt-2 sm:pt-3">
@@ -711,18 +768,54 @@ const Profile = () => {
         )}
       </div>
 
-      {/* Logout Action Button */}
-      <button
-        onClick={logout}
-        className={`w-full py-3 sm:py-3.5 rounded-xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer ${
-          isLight
-            ? 'border-red-200 bg-red-50 hover:bg-red-100 text-red-600'
-            : 'border-red-500/20 bg-red-500/10 hover:bg-red-500/15 text-red-400 hover:text-red-300'
-        }`}
-      >
-        <LogOut className="w-4 h-4 shrink-0" />
-        <span>{t('profile.logout')}</span>
-      </button>
+      {/* Account Settings & Danger Zone Actions */}
+      <div className={`rounded-2xl sm:rounded-3xl p-4 sm:p-6 border transition-all space-y-3.5 ${
+        isLight
+          ? 'bg-white border-slate-200/90 shadow-sm'
+          : 'glass-card border-slate-800/80 shadow-xl'
+      }`}>
+        <div className={`border-b pb-3 ${isLight ? 'border-slate-100' : 'border-slate-800/80'}`}>
+          <h3 className={`text-sm sm:text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            Account Management
+          </h3>
+          <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            Manage your session or permanently remove your account from the database
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 pt-1">
+          {/* Logout Action Button */}
+          <button
+            type="button"
+            onClick={logout}
+            className={`flex-1 py-3 rounded-xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer ${
+              isLight
+                ? 'border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-700'
+                : 'border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300'
+            }`}
+          >
+            <LogOut className="w-4 h-4 shrink-0" />
+            <span>{t('profile.logout')}</span>
+          </button>
+
+          {/* Delete Account Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setDeleteError('');
+              setDeleteModalOpen(true);
+            }}
+            className={`flex-1 py-3 rounded-xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer ${
+              isLight
+                ? 'border-red-200 bg-red-50 hover:bg-red-100 text-red-600 shadow-sm'
+                : 'border-red-500/25 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300'
+            }`}
+          >
+            <Trash2 className="w-4 h-4 shrink-0 text-red-500" />
+            <span>{t('profilePage.deleteAccount', { defaultValue: 'Delete Account' })}</span>
+          </button>
+        </div>
+      </div>
 
       {/* Update Mobile Number & OTP Verification Modal (Mobile Responsive) */}
       {mobileModalOpen && (
@@ -886,6 +979,103 @@ const Profile = () => {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-4 animate-fade-in">
+          <div className={`w-full max-w-md rounded-2xl sm:rounded-3xl shadow-2xl relative border p-5 sm:p-6 space-y-4 animate-scale-up ${
+            isLight
+              ? 'bg-white border-red-200 text-slate-900'
+              : 'glass-modal border-red-500/40 text-white'
+          }`}>
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-500 shrink-0 shadow-inner">
+                  <AlertTriangle className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black tracking-tight text-red-500">
+                    {t('profilePage.deleteAccountConfirmTitle', { defaultValue: 'Delete Account Permanently?' })}
+                  </h3>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 border border-red-500/20 inline-block mt-0.5">
+                    Permanent Action
+                  </span>
+                </div>
+              </div>
+
+              {!deletingAccount && (
+                <button
+                  type="button"
+                  onClick={() => setDeleteModalOpen(false)}
+                  className={`p-1.5 rounded-xl transition-colors cursor-pointer shrink-0 ${
+                    isLight 
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-500' 
+                      : 'bg-slate-800/80 hover:bg-slate-700 text-slate-400'
+                  }`}
+                  title="Cancel"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Error Message */}
+            {deleteError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-xs font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            {/* Warning Description */}
+            <div className={`p-3.5 rounded-2xl border text-xs sm:text-sm font-medium leading-relaxed ${
+              isLight
+                ? 'bg-red-50/70 border-red-200 text-red-950'
+                : 'bg-red-950/20 border-red-900/40 text-red-200'
+            }`}>
+              {t('profilePage.deleteAccountConfirmDesc', {
+                defaultValue: 'Are you sure you want to permanently delete your account? This action cannot be undone. All your profile data, appointments, notifications, and saved salons will be permanently removed from the database.'
+              })}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col-reverse sm:flex-row gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={deletingAccount}
+                onClick={() => setDeleteModalOpen(false)}
+                className={`flex-1 py-3 rounded-xl border font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+                  isLight
+                    ? 'border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    : 'border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300'
+                }`}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={deletingAccount}
+                onClick={handleDeleteAccount}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-550 hover:to-rose-550 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-red-500/30 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {deletingAccount ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin text-white" />
+                    <span>{t('profilePage.deletingAccount', { defaultValue: 'Deleting Account...' })}</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>{t('profilePage.confirmDeleteBtn', { defaultValue: 'Yes, Delete My Account' })}</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -27,6 +27,8 @@ const MainApp = () => {
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isTelegramNoticeOpen, setIsTelegramNoticeOpen] = useState(false);
+  const [isAutoNotice, setIsAutoNotice] = useState(false);
+  const [shouldHighlightLocation, setShouldHighlightLocation] = useState(false);
 
   // Auto-open Telegram Bot notice modal on customer login if not yet read
   useEffect(() => {
@@ -35,9 +37,23 @@ const MainApp = () => {
       const hasRead = localStorage.getItem(readKey);
       if (!hasRead) {
         setIsTelegramNoticeOpen(true);
+        setIsAutoNotice(true);
       }
     }
   }, [isAuthenticated, user]);
+
+  const handleCloseTelegramNotice = () => {
+    setIsTelegramNoticeOpen(false);
+    // When new customer logs in, after closing telegram bot notification info modal,
+    // redirect to profile page and highlight location button with animated finger icon
+    if (isAutoNotice || (!user?.latitude && !user?.longitude)) {
+      setIsAutoNotice(false);
+      setActiveTab('profile');
+      setSelectedSalonId(null);
+      setSelectedAppointmentId(null);
+      setShouldHighlightLocation(true);
+    }
+  };
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -151,7 +167,12 @@ const MainApp = () => {
       case 'notifications':
         return <Notifications />;
       case 'profile':
-        return <Profile />;
+        return (
+          <Profile 
+            highlightLocation={shouldHighlightLocation} 
+            onLocationDetected={() => setShouldHighlightLocation(false)} 
+          />
+        );
       case 'about':
         return <About onBack={() => setActiveTab('salons')} onNavigateTab={handleTabChange} />;
       case 'privacy':
@@ -182,7 +203,7 @@ const MainApp = () => {
 
       <TelegramNoticeModal
         isOpen={isTelegramNoticeOpen}
-        onClose={() => setIsTelegramNoticeOpen(false)}
+        onClose={handleCloseTelegramNotice}
         userId={user?.id}
       />
     </div>

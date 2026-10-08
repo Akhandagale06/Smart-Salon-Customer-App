@@ -830,3 +830,47 @@ body.theme-light,
   color: #475569 !important;
 }
 
+/* ============================================================
+   ANIMATED FINGER & LOCATION BUTTON HIGHLIGHT STYLES
+   ============================================================ */
+@keyframes fingerTapVertical {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(9px) scale(0.92);
+  }
+}
+
+@keyframes fingerTapHorizontal {
+  0%, 100% {
+    transform: translateX(0px) scale(1);
+  }
+  50% {
+    transform: translateX(8px) scale(0.92);
+  }
+}
+
+@keyframes locationPulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(249, 115, 22, 0.45), 0 0 35px rgba(234, 88, 12, 0.25);
+    border-color: rgba(251, 146, 60, 0.9);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(249, 115, 22, 0.85), 0 0 55px rgba(234, 88, 12, 0.5);
+    border-color: #f97316;
+  }
+}
+
+.animate-finger-tap-down {
+  animation: fingerTapVertical 1s ease-in-out infinite;
+}
+
+.animate-finger-tap-right {
+  animation: fingerTapHorizontal 1s ease-in-out infinite;
+}
+
+.animate-location-glow {
+  animation: locationPulseGlow 1.5s ease-in-out infinite;
+}
+
