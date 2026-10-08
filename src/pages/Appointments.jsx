@@ -90,14 +90,17 @@ const Appointments = ({ onSelectAppointment }) => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-bold text-white font-sans">
-            My Appointments
+            {t('appointmentsPage.title', { defaultValue: 'My Appointments' })}
           </h2>
-          <p className="text-xs text-slate-400 font-medium">Manage booked slots and check real-time wait times</p>
+          <p className="text-xs text-slate-400 font-medium">
+            {t('appointmentsPage.subTitle', { defaultValue: 'Manage booked slots and check real-time wait times' })}
+          </p>
         </div>
 
         <button
           onClick={fetchAppointments}
-          className="p-2.5 rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200 transition-colors"
+          className="p-2.5 rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+          title={t('common.refresh', { defaultValue: 'Refresh' })}
         >
           <RefreshCw className="w-4 h-4" />
         </button>

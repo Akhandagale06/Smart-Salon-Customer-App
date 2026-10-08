@@ -420,7 +420,7 @@ const Profile = () => {
           {/* Email Address */}
           <div className="space-y-1.5">
             <label className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-              Email Address
+              {t('profilePage.emailLabel', { defaultValue: 'Email Address' })}
             </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -443,7 +443,7 @@ const Profile = () => {
           {/* Preferred Language Selector */}
           <div className="space-y-1.5">
             <label className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-              Preferred Language
+              {t('profilePage.preferredLanguage', { defaultValue: 'Preferred Language' })}
             </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -451,7 +451,13 @@ const Profile = () => {
               </span>
               <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setLanguage(val);
+                  const code = val === 'HINDI' ? 'hi' : val === 'MARATHI' ? 'mr' : 'en';
+                  i18n.changeLanguage(code);
+                  localStorage.setItem('customer_lang', code);
+                }}
                 className={`w-full border rounded-xl py-2.5 sm:py-3 pl-10 pr-10 text-xs sm:text-sm font-semibold transition-all appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-violet-500/30 ${
                   isLight 
                     ? 'bg-slate-50 border-slate-300 text-slate-900 focus:bg-white focus:border-violet-500' 
@@ -461,12 +467,6 @@ const Profile = () => {
                 <option value="ENGLISH" className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-slate-100'}>English</option>
                 <option value="HINDI" className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-slate-100'}>हिन्दी (Hindi)</option>
                 <option value="MARATHI" className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-slate-100'}>मराठी (Marathi)</option>
-                <option value="TAMIL" className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-slate-100'}>தமிழ் (Tamil)</option>
-                <option value="TELUGU" className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-slate-100'}>తెలుగు (Telugu)</option>
-                <option value="KANNADA" className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-slate-100'}>ಕನ್ನಡ (Kannada)</option>
-                <option value="GUJARATI" className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-slate-100'}>ગુજરાતી (Gujarati)</option>
-                <option value="BENGALI" className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-slate-100'}>বাংলা (Bengali)</option>
-                <option value="PUNJABI" className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-slate-100'}>ਪੰਜਾਬੀ (Punjabi)</option>
               </select>
               <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
                 <ChevronDown className="w-4 h-4" />
@@ -478,23 +478,25 @@ const Profile = () => {
           <div className="space-y-1.5 pt-1">
             <div className="flex items-center justify-between">
               <label className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-                Location Coordinates
+                {t('profilePage.locationCoordinates', { defaultValue: 'Location Coordinates' })}
               </label>
               {gpsAutoDetected || permissionState === 'granted' ? (
                 <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full flex items-center gap-1.5 animate-fade-in">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  GPS Auto-Detected
+                  {t('profilePage.gpsAutoDetected', { defaultValue: 'GPS Auto-Detected' })}
                 </span>
               ) : permissionState === 'denied' ? (
                 <span className="text-[10px] font-medium text-amber-500 flex items-center gap-1">
-                  Permission Denied
+                  {t('profilePage.permissionDenied', { defaultValue: 'Permission Denied' })}
                 </span>
               ) : null}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
               <div className="space-y-1">
-                <span className={`text-[10px] font-semibold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Latitude</span>
+                <span className={`text-[10px] font-semibold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {t('profilePage.latitude', { defaultValue: 'Latitude' })}
+                </span>
                 <input
                   type="number"
                   step="0.0001"
@@ -509,7 +511,9 @@ const Profile = () => {
                 />
               </div>
               <div className="space-y-1">
-                <span className={`text-[10px] font-semibold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Longitude</span>
+                <span className={`text-[10px] font-semibold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {t('profilePage.longitude', { defaultValue: 'Longitude' })}
+                </span>
                 <input
                   type="number"
                   step="0.0001"
@@ -535,7 +539,9 @@ const Profile = () => {
             }`}>
               <MapPin className="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1">
-                <span className="font-bold block text-[10px] uppercase tracking-wider text-violet-500 mb-0.5">Detected Address</span>
+                <span className="font-bold block text-[10px] uppercase tracking-wider text-violet-500 mb-0.5">
+                  {t('profilePage.detectedAddress', { defaultValue: 'Detected Address' })}
+                </span>
                 <span className="break-words leading-relaxed">{resolvedAddress}</span>
               </div>
             </div>
@@ -555,17 +561,17 @@ const Profile = () => {
             {locating ? (
               <>
                 <Loader className="w-4 h-4 animate-spin text-violet-500" />
-                <span>Detecting GPS Location...</span>
+                <span>{t('profilePage.detectingGps', { defaultValue: 'Detecting GPS Location...' })}</span>
               </>
             ) : gpsAutoDetected || permissionState === 'granted' ? (
               <>
                 <RefreshCw className="w-4 h-4 text-emerald-500" />
-                <span>Refresh GPS Coordinates</span>
+                <span>{t('profilePage.refreshGps', { defaultValue: 'Refresh GPS Coordinates' })}</span>
               </>
             ) : (
               <>
                 <MapPin className="w-4 h-4 text-violet-500" />
-                <span>Sync Location & Address</span>
+                <span>{t('profilePage.syncGps', { defaultValue: 'Sync Location & Address' })}</span>
               </>
             )}
           </button>
@@ -580,12 +586,12 @@ const Profile = () => {
               {loading ? (
                 <>
                   <Loader className="w-4 h-4 animate-spin" />
-                  <span>Saving Changes...</span>
+                  <span>{t('profilePage.saving', { defaultValue: 'Saving Changes...' })}</span>
                 </>
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  <span>Save Profile Changes</span>
+                  <span>{t('profilePage.saveProfile', { defaultValue: 'Save Profile Changes' })}</span>
                 </>
               )}
             </button>
@@ -606,13 +612,13 @@ const Profile = () => {
             </div>
             <div>
               <h3 className={`text-sm sm:text-base font-bold flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                <span>My Connected Salons</span>
+                <span>{t('profilePage.connectedSalons', { defaultValue: 'My Connected Salons' })}</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400 font-extrabold border border-violet-500/25">
                   {mySalons.length}
                 </span>
               </h3>
               <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                Control alerts and booking notices per salon
+                {t('profilePage.controlAlerts', { defaultValue: 'Control alerts and booking notices per salon' })}
               </p>
             </div>
           </div>

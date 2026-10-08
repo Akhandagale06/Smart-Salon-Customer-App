@@ -59,7 +59,7 @@ export default function LanguageSelector({ storageKey = 'customer_lang' }) {
       </button>
 
       {isOpen && (
-        <div className={`absolute right-0 mt-2 w-52 rounded-xl shadow-2xl z-[100] overflow-hidden p-1.5 space-y-1.5 border ${
+        <div className={`absolute right-0 mt-2 w-48 sm:w-52 max-w-[calc(100vw-1.5rem)] rounded-xl shadow-2xl z-[100] overflow-hidden p-1.5 space-y-1.5 border ${
           theme === 'light'
             ? 'bg-white border-slate-200 shadow-slate-300/60'
             : 'bg-slate-950 border-slate-700'

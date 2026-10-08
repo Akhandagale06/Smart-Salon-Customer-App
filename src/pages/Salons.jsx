@@ -233,7 +233,7 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
 
       {/* Search active notice */}
       {searchTerm && (
-        <div className={`flex items-center justify-between p-3 sm:p-3.5 rounded-2xl border shadow-sm animate-fade-in transition-all ${
+        <div className={`flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 p-3 sm:p-3.5 rounded-2xl border shadow-sm animate-fade-in transition-all ${
           isLight
             ? 'bg-white border-slate-200 text-slate-800 shadow-slate-200/50'
             : 'bg-slate-900/70 border-slate-800 text-slate-100 shadow-slate-950/40'
@@ -248,12 +248,12 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
               <span className={`text-xs sm:text-sm font-bold block truncate ${
                 isLight ? 'text-slate-900' : 'text-slate-100'
               }`}>
-                Search results for "{searchTerm}"
+                {t('salonsFilter.searchResultsFor', { query: searchTerm, defaultValue: `Search results for "${searchTerm}"` })}
               </span>
               <span className={`text-[10px] sm:text-xs block truncate ${
                 isLight ? 'text-slate-500 font-medium' : 'text-slate-400'
               }`}>
-                Showing all matching salons across all distances
+                {t('salonsFilter.showingAllDistances', { defaultValue: 'Showing all matching salons across all distances' })}
               </span>
             </div>
           </div>
@@ -262,7 +262,7 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
               ? 'bg-violet-50 border-violet-200 text-violet-700 shadow-xs'
               : 'text-violet-400 bg-violet-500/10 border-violet-500/20'
           }`}>
-            {salons.length} found
+            {t('salonsFilter.salonsFound', { count: salons.length, defaultValue: `${salons.length} found` })}
           </span>
         </div>
       )}
@@ -284,19 +284,22 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
               <span className={`text-xs sm:text-sm font-bold block truncate ${
                 isLight ? 'text-slate-900' : 'text-slate-100'
               }`}>
-                Nearby Salons Radius
+                {t('salonsFilter.nearbyRadius', { defaultValue: 'Nearby Salons Radius' })}
               </span>
               <span className={`text-[10px] sm:text-xs block truncate ${
                 isLight ? 'text-slate-500 font-medium' : 'text-slate-400'
               }`}>
                 {coords
-                  ? `Showing salons within ${selectedRadius === 'ALL' ? 'all distances' : selectedRadius + ' km'}`
-                  : 'Detecting GPS to show nearby salons (Default 5 km)'}
+                  ? t('salonsFilter.showingWithin', { 
+                      radius: selectedRadius === 'ALL' ? t('salonsFilter.allDistances', { defaultValue: 'all distances' }) : selectedRadius + ' km',
+                      defaultValue: `Showing salons within ${selectedRadius === 'ALL' ? 'all distances' : selectedRadius + ' km'}`
+                    })
+                  : t('salonsFilter.detectingGps', { defaultValue: 'Detecting GPS to show nearby salons (Default 5 km)' })}
               </span>
             </div>
           </div>
 
-          <div className={`flex items-center gap-1 p-1 rounded-xl border shrink-0 ${
+          <div className={`flex items-center gap-1 p-1 rounded-xl border shrink-0 overflow-x-auto max-w-full ${
             isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-950 border-slate-850'
           }`}>
             {[2, 5, 10, 25].map((km) => (
@@ -304,7 +307,7 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
                 key={km}
                 type="button"
                 onClick={() => handleRadiusChange(km)}
-                className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   selectedRadius === km
                     ? 'bg-violet-600 text-white shadow-md shadow-violet-500/25'
                     : isLight
@@ -318,7 +321,7 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
             <button
               type="button"
               onClick={() => handleRadiusChange('ALL')}
-              className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                 selectedRadius === 'ALL'
                   ? 'bg-violet-600 text-white shadow-md shadow-violet-500/25'
                   : isLight
@@ -326,7 +329,7 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
               }`}
             >
-              All
+              {t('salonsFilter.all', { defaultValue: 'All' })}
             </button>
           </div>
         </div>
@@ -353,7 +356,7 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
                       : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
                 }`}
               >
-                All Salons ({salons.length})
+                {t('salonsFilter.allSalons', { defaultValue: 'All Salons' })} ({salons.length})
               </button>
               <button
                 type="button"
@@ -367,7 +370,7 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
                 }`}
               >
                 <Pin className={`w-3.5 h-3.5 ${filterFavoritesOnly ? 'fill-white text-white rotate-45' : 'fill-violet-500 text-violet-500'}`} />
-                <span>Pinned ({favorites.length})</span>
+                <span>{t('salonsFilter.pinned', { defaultValue: 'Pinned' })} ({favorites.length})</span>
               </button>
             </div>
           )}
@@ -389,14 +392,14 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
               isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-900/50 border-slate-800'
             }`}>
               <p className={`text-sm font-bold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-                No pinned salons found
+                {t('salonsFilter.noPinned', { defaultValue: 'No pinned salons found' })}
               </p>
               <button
                 type="button"
                 onClick={() => setFilterFavoritesOnly(false)}
                 className="mt-3 text-xs text-violet-600 hover:underline font-semibold cursor-pointer"
               >
-                View all salons
+                {t('salonsFilter.viewAllSalons', { defaultValue: 'View all salons' })}
               </button>
             </div>
           )}
@@ -418,18 +421,18 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
 
           <p className={`font-bold text-base ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>
             {searchTerm
-              ? `No salons found matching "${searchTerm}"`
+              ? t('salonsFilter.noSalonsFound', { query: searchTerm, defaultValue: `No salons found matching "${searchTerm}"` })
               : selectedRadius === 'ALL'
-              ? 'No registered salons found'
-              : `No salons found within ${selectedRadius} km`}
+              ? t('salonsFilter.noRegisteredSalons', { defaultValue: 'No registered salons found' })
+              : t('salonsFilter.noSalonsWithinRadius', { radius: selectedRadius, defaultValue: `No salons found within ${selectedRadius} km` })}
           </p>
 
           <p className={`text-xs mt-1.5 max-w-sm leading-relaxed ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
             {searchTerm
-              ? 'Check the spelling or try searching for another salon name, area, town, or city.'
+              ? t('salonsFilter.checkSpelling', { defaultValue: 'Check the spelling or try searching for another salon name, area, town, or city.' })
               : selectedRadius !== 'ALL'
-              ? `There are no salons registered within ${selectedRadius} km of your location. Try expanding the distance radius below or search for a specific salon.`
-              : 'No salons are currently registered on the platform.'}
+              ? t('salonsFilter.tryExpandingRadius', { defaultValue: 'There are no salons registered within this radius. Try expanding the distance radius below or search for a specific salon.' })
+              : t('salonsFilter.noRegisteredSalons', { defaultValue: 'No salons are currently registered on the platform.' })}
           </p>
 
           {/* Quick distance expand buttons */}
@@ -445,7 +448,7 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
                       : 'bg-slate-800 hover:bg-slate-750 text-slate-200 border-slate-700'
                   }`}
                 >
-                  Try 10 km
+                  {t('salonsFilter.try10km', { defaultValue: 'Try 10 km' })}
                 </button>
               )}
               {selectedRadius < 25 && (
@@ -458,7 +461,7 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
                       : 'bg-slate-800 hover:bg-slate-750 text-slate-200 border-slate-700'
                   }`}
                 >
-                  Try 25 km
+                  {t('salonsFilter.try25km', { defaultValue: 'Try 25 km' })}
                 </button>
               )}
               <button
@@ -466,7 +469,7 @@ const Salons = ({ onSelectSalon, searchTerm = '' }) => {
                 onClick={() => handleRadiusChange('ALL')}
                 className="px-4 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold cursor-pointer shadow-md shadow-violet-600/30 transition-all hover:scale-105"
               >
-                Show All Salons
+                {t('salonsFilter.showAllSalons', { defaultValue: 'Show All Salons' })}
               </button>
             </div>
           )}

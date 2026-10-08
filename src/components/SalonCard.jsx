@@ -65,9 +65,9 @@ const SalonCard = ({ salon, onClick, isFavorite = false, onToggleFavorite }) => 
 
         {/* Pinned Indicator on Thumbnail */}
         {isFavorite && (
-          <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-violet-600/95 text-white text-[9px] font-black flex items-center gap-0.5 shadow-md backdrop-blur-sm">
+          <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-violet-600/95 text-white text-[9px] font-black flex items-center gap-0.5 shadow-md backdrop-blur-sm uppercase">
             <Pin className="w-2.5 h-2.5 fill-white" />
-            <span>PINNED</span>
+            <span>{t('salonsFilter.pinned', { defaultValue: 'PINNED' })}</span>
           </div>
         )}
       </div>
@@ -83,7 +83,8 @@ const SalonCard = ({ salon, onClick, isFavorite = false, onToggleFavorite }) => 
           <p className={`text-[10px] font-bold -mt-0.5 flex items-center gap-1 ${
             isLight ? 'text-violet-700' : 'text-violet-400'
           }`}>
-            Owner: <span className={`font-semibold truncate ${
+            <span>{t('salonsFilter.owner', { defaultValue: 'Owner:' })}</span>
+            <span className={`font-semibold truncate ${
               isLight ? 'text-slate-700' : 'text-slate-300'
             }`}>{salon.ownerName || 'Sudam Khandagale'}</span>
           </p>

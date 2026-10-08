@@ -299,7 +299,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
           </p>
           <p className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-slate-500" />
-            Working Hours: {formatTime12Hr(salon?.workingHoursStart?.substring(0, 5))} - {formatTime12Hr(salon?.workingHoursEnd?.substring(0, 5))}
+            {t('salonDetailMsg.workingHours', { defaultValue: 'Working Hours:' })} {formatTime12Hr(salon?.workingHoursStart?.substring(0, 5))} - {formatTime12Hr(salon?.workingHoursEnd?.substring(0, 5))}
           </p>
 
         </div>
@@ -329,9 +329,9 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
         <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-start gap-3 text-rose-300">
           <Lock className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-bold text-sm">Salon Account Suspended</h4>
+            <h4 className="font-bold text-sm">{t('salonDetailMsg.accountLocked', { defaultValue: 'Salon Account Suspended' })}</h4>
             <p className="text-xs opacity-90 mt-0.5">
-              This salon is currently locked by administration. New appointments and queue tokens are not being accepted.
+              {t('salonDetailMsg.accountLockedDesc', { defaultValue: 'This salon is currently locked by administration. New appointments and queue tokens are not being accepted.' })}
             </p>
           </div>
         </div>
@@ -342,9 +342,9 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
         <div className="p-4 bg-red-500/10 border border-red-500/25 rounded-2xl flex items-start gap-3 text-red-600 dark:text-red-400">
           <Clock className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-bold text-sm">Salon is Closed</h4>
+            <h4 className="font-bold text-sm">{t('salonDetailMsg.salonClosed', { defaultValue: 'Salon is Closed' })}</h4>
             <p className="text-xs opacity-90 mt-0.5">
-              The salon is currently outside of working hours ({formatTime12Hr(salon?.workingHoursStart?.substring(0, 5))} - {formatTime12Hr(salon?.workingHoursEnd?.substring(0, 5))}). Booking and queue services are locked.
+              {t('salonDetailMsg.salonClosedDesc', { defaultValue: 'The salon is currently outside of working hours. Booking and queue services are locked.' })} ({formatTime12Hr(salon?.workingHoursStart?.substring(0, 5))} - {formatTime12Hr(salon?.workingHoursEnd?.substring(0, 5))}).
             </p>
           </div>
         </div>
@@ -382,19 +382,19 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
                 <h4 className={`emergency-notice-title font-extrabold text-sm sm:text-base tracking-tight flex items-center gap-2 flex-wrap ${
                   isLight ? 'text-slate-900' : 'text-amber-100'
                 }`}>
-                  <span>Salon Temporarily Closed</span>
+                  <span>{t('salonDetailMsg.temporarilyClosed', { defaultValue: 'Salon Temporarily Closed' })}</span>
                   <span className={`emergency-notice-badge text-[9px] sm:text-[10px] font-black uppercase px-2 sm:px-2.5 py-0.5 rounded-full border tracking-wide shrink-0 ${
                     isLight
                       ? 'bg-amber-100/90 border-amber-300 text-amber-800 shadow-xs'
                       : 'bg-amber-500/20 border-amber-400/30 text-amber-300'
                   }`}>
-                    Special Notice
+                    {t('salonDetailMsg.specialNotice', { defaultValue: 'Special Notice' })}
                   </span>
                 </h4>
                 <p className={`emergency-notice-sub text-[11px] sm:text-xs font-semibold mt-0.5 ${
                   isLight ? 'text-amber-800/80' : 'text-amber-300/80'
                 }`}>
-                  Notice from Salon Owner
+                  {t('salonDetailMsg.ownerNotice', { defaultValue: 'Notice from Salon Owner' })}
                 </p>
               </div>
             </div>
@@ -419,7 +419,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
               isLight ? 'text-slate-600' : 'text-slate-400'
             }`}>
               <Heart className={`w-3.5 h-3.5 mt-0.5 sm:mt-0 ${isLight ? 'text-rose-500' : 'text-pink-400'} fill-current shrink-0 animate-pulse`} />
-              <span>Online bookings & live queue slots are temporarily paused. Thank you for your warm understanding!</span>
+              <span>{t('salonDetailMsg.emergencyNoticeFooter', { defaultValue: 'Online bookings & live queue slots are temporarily paused. Thank you for your warm understanding!' })}</span>
             </p>
           </div>
         </div>
@@ -430,9 +430,9 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
         <div className="p-4 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-start gap-3 text-amber-600 dark:text-amber-400">
           <Zap className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-bold text-sm">Busy Mode Active</h4>
+            <h4 className="font-bold text-sm">{t('salonDetailMsg.busyActive', { defaultValue: 'Busy Mode Active' })}</h4>
             <p className="text-xs opacity-90 mt-0.5">
-              The salon is currently experiencing high demand. Online bookings are paused. Please visit as walk-in or check back later.
+              {t('salonDetailMsg.busyDesc', { defaultValue: 'The salon is currently experiencing high demand. Online bookings are paused. Please visit as walk-in or check back later.' })}
             </p>
           </div>
         </div>
@@ -445,7 +445,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
         <div className="glass-card rounded-3xl p-6 space-y-4">
           <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-900 pb-3">
             <Scissors className="w-4.5 h-4.5 text-violet-400" />
-            Available Services Menu
+            {t('salonDetailMsg.availableMenu', { defaultValue: 'Available Services Menu' })}
           </h3>
 
           <div className="space-y-3.5 max-h-[350px] overflow-y-auto pr-1">
@@ -478,7 +478,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
                 </div>
               ))
             ) : (
-              <p className="text-xs text-slate-500 text-center py-6">No active services provided</p>
+              <p className="text-xs text-slate-500 text-center py-6">{t('salonDetailMsg.noServices', { defaultValue: 'No active services provided' })}</p>
             )}
           </div>
         </div>
@@ -488,7 +488,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
           <div className="glass-card rounded-3xl p-6 space-y-4">
             <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-slate-900 pb-3">
               <Calendar className="w-4.5 h-4.5 text-violet-400" />
-              Book Appointment Slot
+              {t('salonDetailMsg.bookSlot', { defaultValue: 'Book Appointment Slot' })}
             </h3>
 
             <form onSubmit={handleBookSlot} className="space-y-4">
@@ -501,20 +501,20 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
               {/* Selected service summary */}
               <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-xl flex justify-between text-xs">
                 <div>
-                  <span className="text-slate-500 font-semibold uppercase text-[9px]">Selected Service</span>
+                  <span className="text-slate-500 font-semibold uppercase text-[9px]">{t('salonDetailMsg.selectedService', { defaultValue: 'Selected Service' })}</span>
                   <p className="font-bold text-white mt-0.5">
                     {t(`serviceNames.${selectedService.name}`, { defaultValue: selectedService.name })}
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-slate-500 font-semibold uppercase text-[9px]">Service cost</span>
+                  <span className="text-slate-500 font-semibold uppercase text-[9px]">{t('salonDetailMsg.serviceCost', { defaultValue: 'Service cost' })}</span>
                   <p className="font-extrabold text-violet-400 mt-0.5">₹{selectedService.price}</p>
                 </div>
               </div>
 
               {/* Date */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-400">Select Date</label>
+                <label className="text-xs font-semibold text-slate-400">{t('salonDetailMsg.selectDate', { defaultValue: 'Select Date' })}</label>
                 <div className="relative">
                   <input
                     type="text"
@@ -573,11 +573,11 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
                             ? 'bg-white/20 border-white/30 text-white'
                             : 'bg-slate-800 border-slate-700 text-slate-400'
                         }`}>
-                          Auto-assign
+                          {t('salonDetailMsg.autoAssign', { defaultValue: 'Auto-assign' })}
                         </span>
                       </div>
                       <span className={`text-[10px] truncate ${selectedChairId === null ? 'text-violet-100' : 'text-slate-400'}`}>
-                        Fastest available chair
+                        {t('salonDetailMsg.fastestChair', { defaultValue: 'Fastest available chair' })}
                       </span>
                     </button>
 
@@ -589,7 +589,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
                           key={chair.id}
                           type="button"
                           onClick={() => setSelectedChairId(chair.id)}
-                          className={`chair-btn p-3 rounded-2xl border text-xs font-bold transition-all duration-200 text-left flex flex-col justify-between gap-1.5 relative overflow-hidden ${
+                          className={`chair-btn p-3 rounded-2xl border text-xs font-bold transition-all duration-200 text-left flex flex-col justify-between gap-1.5 relative overflow-hidden cursor-pointer ${
                             isSelected
                               ? 'chair-btn-selected bg-gradient-to-br from-violet-600 to-fuchsia-600 border-violet-400 text-white shadow-lg shadow-violet-500/25 ring-2 ring-violet-400/40'
                               : 'chair-btn-unselected bg-slate-950/80 border-slate-800/80 text-slate-300 hover:text-white hover:border-slate-700 hover:bg-slate-900/60'
@@ -613,9 +613,9 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
 
               {/* Time Slots Grid */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-1">
                   <div className="flex items-center gap-2">
-                    <label className="text-xs font-semibold text-slate-400">Available Time Slots</label>
+                    <label className="text-xs font-semibold text-slate-400">{t('salonDetailMsg.availableSlots', { defaultValue: 'Available Time Slots' })}</label>
                     <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                       LIVE
@@ -633,7 +633,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
                     {t('detail.calculatingSlots', { defaultValue: 'Calculating empty slots...' })}
                   </div>
                 ) : slots.length > 0 ? (
-                  <div className="grid grid-cols-4 gap-2 max-h-[180px] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[180px] overflow-y-auto pr-1">
                     {slots
                       .filter((slot) => {
                         // When booking for today, omit past slots from earlier hours
@@ -655,7 +655,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
                           disabled={!slot.available}
                           onClick={() => setBookingTime(slot.time)}
                           title={slot.breakName ? `Break: ${slot.breakName}` : (!slot.available ? 'Slot Booked' : 'Available')}
-                          className={`py-2 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300 border ${
+                          className={`py-2 px-1 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300 border cursor-pointer ${
                             bookingTime === slot.time
                               ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white border-violet-400 shadow-md shadow-violet-500/20'
                               : slot.breakName
@@ -670,7 +670,7 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
                       ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-500 py-2">No slots available for the selected date.</p>
+                  <p className="text-xs text-slate-500 py-2">{t('detail.noSlots', { defaultValue: 'No slots available for the selected date.' })}</p>
                 )}
               </div>
 
@@ -678,12 +678,12 @@ const SalonDetail = ({ salonId, onBack, onBookingSuccess }) => {
               <button
                 type="submit"
                 disabled={bookingLoading || !bookingTime || isBookingDateOnHoliday}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-violet-500/10 transition-opacity"
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-violet-500/10 transition-opacity cursor-pointer"
               >
                 {bookingLoading ? (
                   <Loader className="w-5 h-5 animate-spin" />
                 ) : (
-                  'Confirm Booking Slot'
+                  t('salonDetailMsg.confirmBooking', { defaultValue: 'Confirm Booking Slot' })
                 )}
               </button>
             </form>

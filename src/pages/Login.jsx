@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Phone, Lock, Sparkles, Loader, ArrowRight, User, MessageSquare } from 'lucide-react';
 import api from '../config/api';
 import Footer from '../components/Footer';
+import LanguageSelector from '../components/LanguageSelector';
 
 const Login = ({ forceStep3 }) => {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const { sendOtp, verifyOtp, updateProfileInContext } = useAuth();
   const [mobileNumber, setMobileNumber] = useState('');
@@ -38,7 +41,7 @@ const Login = ({ forceStep3 }) => {
     setInfoMessage('');
     
     if (!/^[6-9]\d{9}$/.test(mobileNumber)) {
-      setError('Please enter a valid 10-digit mobile number');
+      setError(t('login.errValidMobile', { defaultValue: 'Please enter a valid 10-digit mobile number' }));
       return;
     }
 
@@ -51,12 +54,12 @@ const Login = ({ forceStep3 }) => {
       if (fetchedOtp && (typeof fetchedOtp === 'string' || typeof fetchedOtp === 'number')) {
         const codeStr = String(fetchedOtp);
         setOtpPopup({ show: true, code: codeStr, number: mobileNumber, timeLeft: 20 });
-        setInfoMessage('OTP generated! See the pop-up notification at the top.');
+        setInfoMessage('OTP generated! See notification popup.');
       } else {
         setInfoMessage('OTP sent! Please check SMS or backend logs.');
       }
     } catch (err) {
-      setError(err.message || 'Failed to send OTP.');
+      setError(err.message || t('login.errSendOtpFailed', { defaultValue: 'Failed to send OTP.' }));
     } finally {
       setLoading(false);
     }
@@ -121,7 +124,12 @@ const Login = ({ forceStep3 }) => {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col justify-between p-6 relative overflow-hidden font-sans ${theme === 'light' ? 'theme-light bg-slate-100 text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
+    <div className={`min-h-screen flex flex-col justify-between p-4 sm:p-6 relative overflow-hidden font-sans ${theme === 'light' ? 'theme-light bg-slate-100 text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
+      {/* Top Language Selector */}
+      <div className="absolute top-3 right-3 sm:top-5 sm:right-6 z-30">
+        <LanguageSelector storageKey="customer_lang" />
+      </div>
+
       {/* 20-Second OTP Pop-up Toast */}
       {otpPopup.show && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-md animate-bounce-in">
@@ -139,20 +147,20 @@ const Login = ({ forceStep3 }) => {
                 </div>
                 <div>
                   <h4 className="text-xs font-black uppercase tracking-wider text-violet-300 flex items-center gap-2">
-                    <span>💬 Simulated SMS Received</span>
+                    <span>💬 {t('login.simulatedSms', { defaultValue: 'Simulated SMS Received' })}</span>
                     <span className="text-[10px] bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded-full border border-violet-500/30 font-bold">
                       {otpPopup.timeLeft}s
                     </span>
                   </h4>
                   <p className="text-xs text-slate-300 font-medium mt-0.5">
-                    Your verification OTP for <span className="text-slate-100 font-bold">+91 {otpPopup.number}</span> is:
+                    {t('login.otpForNumber', { defaultValue: 'Your verification OTP for' })} <span className="text-slate-100 font-bold">+91 {otpPopup.number}</span> {t('login.is', { defaultValue: 'is:' })}
                   </p>
                 </div>
               </div>
 
               <button 
                 onClick={() => setOtpPopup(prev => ({ ...prev, show: false }))}
-                className="text-slate-400 hover:text-white text-xs font-bold p-1"
+                className="text-slate-400 hover:text-white text-xs font-bold p-1 cursor-pointer"
                 title="Close"
               >
                 ✕
@@ -170,9 +178,9 @@ const Login = ({ forceStep3 }) => {
                   setOtp(otpPopup.code);
                   setOtpPopup(prev => ({ ...prev, show: false }));
                 }}
-                className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md"
+                className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
               >
-                Auto-fill Code
+                {t('login.autoFill', { defaultValue: 'Auto-fill Code' })}
               </button>
             </div>
           </div>
@@ -180,7 +188,7 @@ const Login = ({ forceStep3 }) => {
       )}
 
       {/* Glows */}
-      <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-violet-600/10 rounded-full blur-3xl"></div>
+      <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-violet-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="my-auto w-full max-w-md mx-auto relative z-10 pt-4">
         {/* Centered Brand Header directly upper side of the box */}
@@ -204,10 +212,12 @@ const Login = ({ forceStep3 }) => {
         {/* Card */}
         <div className="glass-panel rounded-3xl px-6 sm:px-8 py-8 sm:py-10 shadow-2xl relative border-t-2 border-t-violet-500/40 mb-4">
           <h2 className="text-xl sm:text-2xl font-extrabold text-white mb-1.5">
-            {step === 3 ? 'Complete Profile' : 'Customer Login'}
+            {step === 3 ? t('login.completeProfile', { defaultValue: 'Complete Profile' }) : t('login.customerLogin', { defaultValue: 'Customer Login' })}
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 mb-6 font-medium">
-            {step === 3 ? 'Please enter your name to complete registration' : 'Enter mobile number to get instant OTP code'}
+            {step === 3 
+              ? t('login.enterNamePrompt', { defaultValue: 'Please enter your name to complete registration' }) 
+              : t('login.enterMobile', { defaultValue: 'Enter mobile number to get instant OTP code' })}
           </p>
 
           {error && (
@@ -225,7 +235,9 @@ const Login = ({ forceStep3 }) => {
           {step === 1 ? (
             <form onSubmit={handleSendOtp} className="space-y-5">
               <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-slate-200">Mobile Number</label>
+                <label className="text-xs sm:text-sm font-semibold text-slate-200">
+                  {t('login.mobileLabel', { defaultValue: 'Mobile Number' })}
+                </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
                     <Phone className="w-5 h-5" />
@@ -233,7 +245,7 @@ const Login = ({ forceStep3 }) => {
                   <input
                     type="tel"
                     required
-                    placeholder="Enter 10-digit mobile number"
+                    placeholder={t('login.mobilePlaceholder', { defaultValue: 'Enter 10-digit mobile number' })}
                     value={mobileNumber}
                     onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ''))}
                     className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3.5 sm:py-4 pl-11 pr-4 text-base text-slate-100 placeholder-slate-500 focus:border-violet-500 focus:outline-none transition-colors font-medium"
@@ -244,15 +256,17 @@ const Login = ({ forceStep3 }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 disabled:opacity-50 text-white text-base font-bold rounded-xl py-3.5 sm:py-4 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20 transition-all"
+                className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 disabled:opacity-50 text-white text-base font-bold rounded-xl py-3.5 sm:py-4 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20 transition-all cursor-pointer"
               >
-                {loading ? <Loader className="w-6 h-6 animate-spin" /> : <>Send OTP <ArrowRight className="w-5 h-5" /></>}
+                {loading ? <Loader className="w-6 h-6 animate-spin" /> : <>{t('login.sendOtp', { defaultValue: 'Send OTP' })} <ArrowRight className="w-5 h-5" /></>}
               </button>
             </form>
           ) : step === 2 ? (
             <form onSubmit={handleVerifyOtp} className="space-y-5">
               <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-slate-200">Enter OTP</label>
+                <label className="text-xs sm:text-sm font-semibold text-slate-200">
+                  {t('login.otpLabel', { defaultValue: 'Enter OTP' })}
+                </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
                     <Lock className="w-5 h-5" />
@@ -261,7 +275,7 @@ const Login = ({ forceStep3 }) => {
                     type="text"
                     required
                     maxLength={6}
-                    placeholder="Enter 6-digit OTP"
+                    placeholder={t('login.otpPlaceholder', { defaultValue: 'Enter 6-digit OTP' })}
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                     className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3.5 sm:py-4 pl-11 pr-4 text-base sm:text-lg text-slate-100 focus:border-violet-500 focus:outline-none tracking-[0.25em] font-mono text-center"
@@ -272,23 +286,25 @@ const Login = ({ forceStep3 }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 disabled:opacity-50 text-white text-base font-bold rounded-xl py-3.5 sm:py-4 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20 transition-all"
+                className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 disabled:opacity-50 text-white text-base font-bold rounded-xl py-3.5 sm:py-4 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20 transition-all cursor-pointer"
               >
-                {loading ? <Loader className="w-6 h-6 animate-spin" /> : 'Verify & Log In'}
+                {loading ? <Loader className="w-6 h-6 animate-spin" /> : t('login.verifyAndContinue', { defaultValue: 'Verify & Log In' })}
               </button>
 
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="w-full text-center text-xs sm:text-sm text-slate-400 hover:text-slate-200 mt-2 block transition-colors"
+                className="w-full text-center text-xs sm:text-sm text-slate-400 hover:text-slate-200 mt-2 block transition-colors cursor-pointer"
               >
-                Change mobile number
+                {t('login.editMobile', { defaultValue: 'Change mobile number' })}
               </button>
             </form>
           ) : (
             <form onSubmit={handleSaveName} className="space-y-5">
               <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-slate-200">Your Full Name</label>
+                <label className="text-xs sm:text-sm font-semibold text-slate-200">
+                  {t('login.nameLabel', { defaultValue: 'Your Full Name' })}
+                </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
                     <User className="w-5 h-5" />
@@ -296,7 +312,7 @@ const Login = ({ forceStep3 }) => {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Rahul Sharma"
+                    placeholder={t('login.namePlaceholder', { defaultValue: 'e.g. Rahul Sharma' })}
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3.5 sm:py-4 pl-11 pr-4 text-base text-slate-100 placeholder-slate-500 focus:border-violet-500 focus:outline-none transition-colors font-medium"
@@ -307,19 +323,12 @@ const Login = ({ forceStep3 }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 disabled:opacity-50 text-white text-base font-bold rounded-xl py-3.5 sm:py-4 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20 transition-all"
+                className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 disabled:opacity-50 text-white text-base font-bold rounded-xl py-3.5 sm:py-4 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20 transition-all cursor-pointer"
               >
-                {loading ? <Loader className="w-6 h-6 animate-spin" /> : 'Complete Registration'}
+                {loading ? <Loader className="w-6 h-6 animate-spin" /> : t('login.saveAndContinue', { defaultValue: 'Complete Registration' })}
               </button>
             </form>
           )}
-        </div>
-
-        {/* Info */}
-        <div className="text-center mb-6">
-          <p className="text-xs text-violet-400 font-medium">
-            ✨ Any new mobile number will automatically register as a new Customer!
-          </p>
         </div>
 
         <Footer />
